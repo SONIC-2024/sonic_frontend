@@ -1,0 +1,78 @@
+.words-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #55679C;
+  color: #FFF;
+}
+
+.words-container h1 {
+  margin-bottom: 20px;
+}
+
+.words-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 가로로 3개의 단어가 나열되도록 설정 */
+  grid-gap: 10px;
+  justify-items: center;
+  align-items: center;
+}
+
+.word-button {
+  background-color: transparent;
+  border: 2px solid #E0E0E0;
+  border-radius: 20px;
+  padding: 40px 40px;
+  color: #E0E0E0;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 300px; /* 고정된 가로 폭 추가 */
+  height: 100px;
+  flex-shrink: 0; /* 버튼 크기가 축소되지 않도록 설정 */
+}
+
+.pagination-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.nav-arrow {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 10px;
+}
+
+.triangle-left, .triangle-right {
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.triangle-left {
+  border-width: 15px 20px 15px 0;
+  border-color: transparent #FFD700 transparent transparent;
+}
+
+.triangle-right {
+  border-width: 15px 0 15px 20px;
+  border-color: transparent transparent transparent #FFD700;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}

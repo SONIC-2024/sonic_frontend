@@ -1,0 +1,134 @@
+.login-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+.login-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.general-login-button,
+.kakao-login-button,
+.switch-button,
+.close-button {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.general-login-button {
+  background-color: #8294C4;
+  color: white;
+}
+
+.kakao-login-button {
+  background-color: #FEE500;
+  color: black;
+}
+
+.close-button {
+  background-color: #FF6B6B;
+  color: white;
+}
+
+.switch-button {
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #ccc;
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.switch-button:hover {
+  background-color: #f0f0f0;
+}
+
+.general-login-button:hover {
+  background-color: #6f7da0;
+}
+
+.kakao-login-button:hover {
+  background-color: #e0d500;
+}
+
+.close-button:hover {
+  background-color: #e05555;
+}
+
+
+/* 추가된 스타일: 비밀번호 찾기 모달 */
+.recover-password-modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: auto;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.modal-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.modal-button,
+.modal-button.cancel {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.modal-button.cancel {
+  background-color: #FF6B6B;
+  color: white;
+}
+
+.modal-button:hover {
+  background-color: #45a049;
+}
+
+.modal-button.cancel:hover {
+  background-color: #e05555;
+}

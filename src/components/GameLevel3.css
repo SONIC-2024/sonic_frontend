@@ -1,0 +1,86 @@
+.game-level3-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.game-level3-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #FFEAD2;
+  position: relative; /* 별 버튼의 기준 위치로 설정 */
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.game-level3-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #8294C4;
+  position: relative; /* 별 버튼의 위치를 위해 relative 위치 지정 */
+}
+
+.favorite-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 36px;
+  cursor: pointer;
+  color: transparent;
+  text-shadow: 0 0 0 yellow;
+  z-index: 100;
+  outline: none;
+}
+
+.favorite-button.active {
+  color: yellow; /* 활성화 시 별을 노란색으로 채움 */
+  text-shadow: none;
+}
+
+.word-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.word-item {
+  font-size: 96px;
+  font-weight: bold;
+}
+
+.cam-placeholder {
+  font-size: 48px;
+  color: #FFEAD2;
+}
+
+.next-button {
+  margin-top: 20px;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: #FFEAD2;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.next-button:hover {
+  background-color: #45a049;
+}

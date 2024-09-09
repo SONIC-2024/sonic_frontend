@@ -1,0 +1,77 @@
+.consonants-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #55679C;
+  color: #FFEAD2;
+}
+
+.consonants-container h1 {
+  margin-bottom: 20px;
+}
+
+.consonants-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 10px;
+  justify-items: center;
+  align-items: center;
+}
+
+.consonant-button {
+  background-color: transparent;
+  border: 2px solid #FFEAD2;
+  border-radius: 20px;
+  padding: 20px 40px;
+  color: #FFEAD2;
+  font-size: 24px;
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.nav-arrow {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 10px;
+}
+
+.triangle-left, .triangle-right {
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+.triangle-left {
+  border-width: 15px 20px 15px 0;
+  border-color: transparent #FFD700 transparent transparent;
+}
+
+.triangle-right {
+  border-width: 15px 0 15px 20px;
+  border-color: transparent transparent transparent #FFD700;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}

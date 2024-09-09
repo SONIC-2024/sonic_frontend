@@ -1,0 +1,99 @@
+.ranking-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.ranking-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+.ranking-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+  color: #333;
+  border-radius: 8px;
+}
+
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ranking-modal-content {
+  background-color: #fffbea;
+  padding: 20px;
+  border-radius: 10px;
+  width: 100%;
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ranking-item:nth-child(odd) {
+  background-color: #fff8e1;
+}
+
+.ranking-rank {
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.tier-image,
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.exp,
+.attendance {
+  font-size: 14px;
+  color: #666;
+}
+
+.close-modal-button {
+  background-color: transparent;
+  border: none;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+}
