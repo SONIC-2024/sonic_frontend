@@ -1,7 +1,16 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 스크롤바 없애기 */
+  height: 100%; /* 전체 높이를 100%로 설정 */
+}
+
 .game-level3-container {
   display: flex;
   height: 100vh;
   width: 100vw;
+  overflow: hidden; /* 스크롤바가 나오지 않도록 설정 */
+  position: relative;
 }
 
 .game-level3-left {
@@ -10,7 +19,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #FFEAD2;
+  background-color: #FFEAD2; /* 왼쪽 화면 배경색 */
   position: relative;
 }
 
@@ -23,15 +32,6 @@
   font-size: 24px;
   cursor: pointer;
   z-index: 100;
-}
-
-.game-level3-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #8294C4;
-  position: relative;
 }
 
 .favorite-button {
@@ -69,7 +69,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #55679C;
+  background-color: #55679C; /* CAM 부분 배경색 설정 */
   color: #FFF;
   padding: 10px;
   border-radius: 10px;
@@ -77,17 +77,30 @@
   height: 100%;
 }
 
+.game-level3-right {
+  width: 50%; /* 오른쪽 화면 절반을 차지하게 설정 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* 텍스트를 위쪽에 배치 */
+  background-color: #55679C; /* 비디오 배경색 유지 */
+  height: 100vh; /* 세로로 화면 전체 높이를 차지하게 설정 */
+  position: relative; /* 별 버튼과 비디오 간격을 조절하기 위해 사용 */
+}
+
 .video-title {
-  margin-bottom: 20px;
-  font-size: 32px;
-  color: #FFF;
+  font-size: 1rem; /* "Live Video Feed" 텍스트 크기를 작게 설정 */
+  color: white; /* 텍스트 색상 설정 */
+  margin-bottom: 10px; /* 텍스트 아래에 간격 추가 */
 }
 
 .video-feed {
-  max-width: 90%; /* 비디오 크기를 조절하여 뷰포트를 넘지 않도록 설정 */
-  max-height: 80%; /* 비디오 크기 조절 */
+  width: 100%; /* 비디오가 오른쪽 절반 전체 너비를 차지하도록 설정 */
+  height: 100%; /* 비디오가 세로로도 전체를 차지하게 설정 */
   border-radius: 10px;
-  background-color: #FFF; /* 비디오 주위에 흰색 배경 추가 */
+  background-color: #FFF;
+  object-fit: cover; /* 비디오 비율 유지하면서 크기 맞춤 */
+  margin-top: 40px; /* 별 버튼과 비디오 사이 여백 추가 */
 }
 
 .next-button {
