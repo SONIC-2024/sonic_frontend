@@ -10,12 +10,14 @@ import Vowels from './components/Vowels';
 import Words from './components/Words';
 import ConsonantDetail from './components/ConsonantDetail';
 import VowelDetail from './components/VowelDetail';
+import WordDetail from './components/WordDetail'; // WordDetail 추가
 import GameLevel1 from './components/GameLevel1';
 import GameLevel2 from './components/GameLevel2';
 import GameLevel3 from './components/GameLevel3';
 import Login from './components/Login';
 import Register from './components/Register';
 import VideoFeed from './components/VideoFeed';
+import OAuthCallback from './components/OAuthCallback'; // 추가된 OAuthCallback 컴포넌트
 import GlobalStyle from './styles/GlobalStyle';
 
 function App() {
@@ -36,10 +38,12 @@ function App() {
           <Route path="/words" element={<Words />} />
           <Route path="/consonant-detail/:index" element={<ConsonantDetail />} />
           <Route path="/vowel-detail/:index" element={<VowelDetail />} />
+          <Route path="/word-detail/:id" element={<WordDetail />} />
           <Route path="/game-level1" element={<GameLevel1 />} />
           <Route path="/game-level2" element={<GameLevel2 />} />
           <Route path="/game-level3" element={<GameLevel3 />} />
           <Route path="/video-feed" element={<VideoFeed />} /> 
+          <Route path="/oauth" element={<OAuthCallback />} /> {/* "/oauth" 경로 추가 */}
         </Routes>
       </Router>
     </>

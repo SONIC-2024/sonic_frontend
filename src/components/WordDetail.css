@@ -5,7 +5,7 @@ html, body {
   height: 100%; /* 전체 높이를 100%로 설정 */
 }
 
-.vowel-detail-container {
+.word-detail-container {
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -32,14 +32,12 @@ html, body {
   cursor: pointer;
 }
 
-.vowel-detail-image {
-  max-width: 80%;
-  max-height: 80%;
-}
-
-.vowel-character {
-  font-size: 48px;
+/* WordDetail.css */
+.word-text {
+  font-size: 48px; /* 글씨 크기를 조정하세요 */
+  color: black; /* 글씨 색상 설정 */
   margin-top: 20px;
+  text-align: center;
 }
 
 .cam-placeholder {

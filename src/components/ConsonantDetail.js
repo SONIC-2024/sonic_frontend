@@ -40,9 +40,12 @@ function ConsonantDetail() {
       <button className="back-button" onClick={handleGoBack}>&larr;</button>
       <div className="detail-content">
         <img src={consonantImages[index]} alt={`consonant${index + 1}`} className="consonant-detail-image" />
-        <p className="consonant-character">{consonants[index]}</p>
+        <p className="consonant-character">{consonants[parseInt(index)]}</p>
       </div>
-      <div className="cam-placeholder">CAM</div>
+      <div className="cam-placeholder">
+        <h2 className="video-title">Live Video Feed</h2>
+        <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
+      </div>
     </Container>
   );
 }

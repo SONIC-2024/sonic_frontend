@@ -8,48 +8,46 @@ import './GameLevel2.css';
 Modal.setAppElement('#root');
 
 function GameLevel2() {
-  const [currentImage, setCurrentImage] = useState('');
-  const [correctAnswer, setCorrectAnswer] = useState('');
-  const [options, setOptions] = useState([]);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [score, setScore] = useState(0);
-  const [questionCount, setQuestionCount] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [currentImage, setCurrentImage] = useState(''); // 이미지 URL
+  const [correctAnswer, setCorrectAnswer] = useState(''); // 정답
+  const [options, setOptions] = useState([]); // 보기
+  const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
+  const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
+  const [score, setScore] = useState(0); // 점수
+  const [questionCount, setQuestionCount] = useState(0); // 문제 개수
+  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    generateQuestion();
+    generateQuestion(); // 첫 번째 문제 로드
   }, []);
 
   const generateQuestion = async () => {
     try {
-      const response = await fetchLevel2Quiz();
-      console.log('API 응답:', response); // 응답을 콘솔에 출력하여 구조를 확인
-      if (response && response.success) {
-        setCurrentImage(response.data.objectUrl); // 이미지 URL 설정
-        setCorrectAnswer(response.data.answer); // 정답 설정
-        setOptions(shuffleArray(response.data.content)); // 선택지 설정
-        setIsFavorite(response.data.isFavorite || false); // 즐겨찾기 상태 설정
+      const randomQuizId = 100; // 100번만 호출 (임시)
+      const response = await fetchLevel2Quiz(randomQuizId); // API 호출
+      console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
+  
+      if (response) {
+        setCurrentImage(response.objectUrl); // 이미지 URL 설정
+        setCorrectAnswer(response.correctAnswer); // 정답 설정
+        setOptions(response.options); // 4지선다 보기 설정
+        setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
       } else {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response?.message);
+        console.error('퀴즈 데이터를 불러오는 데 실패했습니다.'); // response가 없을 때 에러 처리
       }
     } catch (error) {
-      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
+      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error); // 오류 메시지 출력
     }
-  };
-
-  const shuffleArray = (array) => {
-    return array.sort(() => Math.random() - 0.5);
-  };
+  };  
 
   const handleOptionClick = async (option) => {
     if (option === correctAnswer) {
       setIsCorrect(true);
       setScore(score + 1);
       try {
-        await handleQuizAnswer(correctAnswer);
+        await handleQuizAnswer(correctAnswer); // 정답 처리 API 호출
       } catch (error) {
         console.error('퀴즈 정답 처리 중 오류 발생:', error);
       }
@@ -62,8 +60,8 @@ function GameLevel2() {
 
   const handleFavoriteClick = async () => {
     try {
-      await toggleFavorite(currentImage.id);
-      setIsFavorite(!isFavorite);
+      await toggleFavorite(100); // 100번 퀴즈 ID로 즐겨찾기 토글
+      setIsFavorite(!isFavorite); // 즐겨찾기 상태 변경
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
     }
@@ -72,14 +70,14 @@ function GameLevel2() {
   const handleCloseModal = () => {
     setModalIsOpen(false);
     if (questionCount >= 10) {
-      navigate('/');
+      navigate('/'); // 10문제를 완료한 경우 홈으로 이동
     } else {
-      generateQuestion();
+      generateQuestion(); // 다음 문제로 이동
     }
   };
 
   const handleGoBack = () => {
-    window.history.back();
+    navigate(-1);
   };
 
   return (

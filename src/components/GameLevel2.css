@@ -2,7 +2,7 @@
   display: flex;
   height: 100vh;
   width: 100vw;
-  position: relative; /* 전체 컨테이너에 상대 위치 설정 */
+  position: relative;
 }
 
 .game-level2-left {
@@ -32,7 +32,7 @@
   align-items: center;
   justify-content: center;
   background-color: #8294C4;
-  position: relative; /* 별 버튼의 위치를 위해 relative 위치 지정 */
+  position: relative;
 }
 
 .favorite-button {
@@ -70,16 +70,21 @@
   font-size: 24px;
   cursor: pointer;
   margin: 10px;
-  width: 100px;
-  height: 50px;
+  width: 200px; /* 보기 버튼의 크기 설정 */
+  height: 60px; /* 보기 버튼의 높이 설정 */
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.option-button:hover {
+  background-color: #FFD700; /* 버튼에 마우스를 올릴 때 배경색 */
 }
 
 .progress-indicator {
   margin-top: 20px;
-  font-size: 18px;
+  font-size: 24px;
   color: #FFEAD2;
 }
 
@@ -117,13 +122,13 @@
 
 .modal-content h2 {
   margin-bottom: 20px;
-  font-size: 24px;
+  font-size: 48px;
   font-weight: bold;
 }
 
 /* 정답과 오답 아이콘 */
 .correct-icon, .wrong-icon {
-  font-size: 150px; /* 수정된 폰트 사이즈 */
+  font-size: 150px;
   font-weight: bold;
   margin-bottom: 10px;
 }

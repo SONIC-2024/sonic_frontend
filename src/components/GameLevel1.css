@@ -1,46 +1,52 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 스크롤바 없애기 */
+  height: 100%; /* 전체 높이를 100%로 설정 */
+}
+
 .game-level1-container {
   display: flex;
   height: 100vh;
   width: 100vw;
-  position: relative; /* Container에서 relative 위치 지정 */
+  overflow: hidden; /* 스크롤바가 나오지 않도록 설정 */
+  position: relative;
 }
 
 .game-level1-left {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: #FFEAD2;
 }
 
 .back-button {
-  position: absolute; /* 위치를 절대적으로 설정 */
-  top: 20px; /* 상단에서 20px 아래에 위치 */
-  left: 20px; /* 왼쪽에서 20px 오른쪽에 위치 */
+  position: absolute;
+  top: 20px;
+  left: 20px;
   background: none;
   border: none;
   font-size: 24px;
   cursor: pointer;
-  z-index: 100; /* z-index를 높여 다른 요소보다 위에 나타나도록 설정 */
 }
 
 .favorite-button {
-  position: absolute; /* 절대 위치 설정 */
-  top: 20px; /* 상단에서 20px */
-  right: 20px; /* 오른쪽에서 20px */
-  background: none; /* 배경 없음 */
-  border: none; /* 테두리 없음 */
-  font-size: 36px; /* 별 크기 */
-  cursor: pointer; /* 커서 모양 변경 */
-  color: transparent; /* 별 내부를 투명하게 */
-  text-shadow: 0 0 0 yellow; /* 별 테두리 노란색 */
-  z-index: 100; /* z-index 설정 */
-  outline: none; /* 클릭 시 윤곽선 제거 */
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 36px;
+  cursor: pointer;
+  color: transparent;
+  text-shadow: 0 0 0 yellow;
 }
 
 .favorite-button.active {
-  color: yellow; /* 활성화 시 별을 노란색으로 채움 */
-  text-shadow: none; /* 테두리 제거 */
+  color: yellow;
+  text-shadow: none;
 }
 
 .random-character {
@@ -50,15 +56,33 @@
 .game-level1-right {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #8294C4;
+  background-color: #55679C; /* 비디오 배경색 설정 */
 }
 
 .cam-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #55679C; /* CAM 부분 배경색 설정 */
   font-size: 48px;
-  color: #FFEAD2;
-  background-color: #8294C4; /* CAM 부분 배경색을 오른쪽 배경색과 동일하게 설정 */
-  padding: 10px; 
-  border-radius: 10px; 
+  color: #FFF;
+  width: 100%;
+  height: 100%;
+}
+
+.video-title {
+  margin-bottom: 20px;
+  font-size: 32px;
+  color: #FFF; /* 흰색 글씨로 설정 */
+}
+
+.video-feed {
+  max-width: 90%; /* 비디오 크기 조정 */
+  max-height: 80%; /* 비디오 크기 조정 */
+  border-radius: 10px;
+  background-color: #FFF; /* 비디오 주위에 흰색 배경 추가 */
 }

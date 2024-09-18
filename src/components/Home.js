@@ -21,41 +21,41 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // 카카오 로그인 초기화
     if (window.Kakao && !window.Kakao.isInitialized()) {
       window.Kakao.init('470dc7bf73bd968fd704a3afec689397'); // REST API 키
     }
-  
+
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = urlParams.get('code'); // 카카오로부터 인가 코드를 받음
     if (code) {
-      handleLogin(code); // 카카오 인가 코드로 로그인 처리
+      handleLogin(code); // 인가 코드로 로그인 처리
     } else {
       const token = localStorage.getItem('accessToken');
       if (token) {
-        getUserName();
+        getUserName(); // 로그인된 사용자가 있으면 사용자 이름 가져오기
       }
     }
   }, []);
-  
+
   const handleLogin = async (code) => {
     try {
-      const response = await fetchAccessToken(code); // 백엔드로 인가 코드를 보내 액세스 토큰을 받음
-      if (response.success) {
-        const token = response.data.accessToken;
-        localStorage.setItem('accessToken', token);
-        await getUserName();
-        closeModal();
+      const response = await fetchAccessToken(code);  // 인가 코드를 이용해 액세스 토큰 요청
+      if (response && response.success) {
+        navigate('/');  // 성공하면 홈으로 리디렉션
       } else {
-        console.error('로그인 실패:', response.message);
+        console.error('로그인 실패:', response?.message);
+        navigate('/');  // 실패 시 홈으로 리디렉션
       }
     } catch (error) {
-      console.error('로그인 중 오류 발생:', error);
+      console.error('로그인 처리 중 오류 발생:', error);
+      navigate('/');  // 오류 발생 시 홈으로 리디렉션
     }
-  };
+  };    
 
   const handleKakaoLogin = () => {
-    const clientId = '470dc7bf73bd968fd704a3afec689397'; // REST API 키
-    const redirectUri = 'http://localhost:3000/oauth'; // 로컬 백엔드에서 처리될 리디렉트 URI
+    const clientId = '8e3643a2c6410ddcc34494402ba6293d';  // 카카오 REST API 키
+    const redirectUri = 'http://localhost:3000/oauth';  // 리디렉트 URI
     window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
   };  
 
@@ -64,19 +64,22 @@ function Home() {
       const response = await loginUser(email, password); // 일반 로그인 처리
       if (response.success) {
         localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
         await getUserName();
         closeModal();
       } else {
         console.error('로그인 실패:', response.message);
+        alert('일반 로그인에 실패했습니다. 다시 시도해 주세요.');
       }
     } catch (error) {
       console.error('일반 로그인 중 오류 발생:', error);
+      alert('일반 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
   };
 
   const getUserName = async () => {
     try {
-      const response = await fetchUserName(); // 유저 이름을 가져오는 API 호출
+      const response = await fetchUserName(); // 사용자 이름을 가져오는 API 호출
       if (response.success && response.data.authenticated) {
         setUserName(response.data.name);
       } else {

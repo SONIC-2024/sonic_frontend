@@ -17,6 +17,8 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.error("토큰이 존재하지 않습니다. 로그인 상태를 확인하세요.");
     }
     return config;
   },
@@ -65,15 +67,51 @@ export const reissueAccessToken = async () => {
   }
 };
 
-// 자음/모음/단어 목록 불러오기 API
-export const fetchCategoryList = async (category) => {
+// 단어 정보 불러오기 API
+// API 호출 함수에서 로그 추가
+export const fetchWordInfo = async (wordId) => {
+  console.log(`Fetching word info with id: ${wordId}`); // 로그 추가
   try {
-    const response = await apiClient.get(`/items?category=${category}&size=9&sort=true`);
+    const response = await apiClient.get(`/word?word-id=${wordId}`);
+    console.log('API response:', response.data); // 응답 데이터 확인
     return response.data;
   } catch (error) {
+    console.error('API 호출 중 오류:', error);
     handleError(error);
   }
 };
+
+// 단어 목록 불러오기 API
+export const fetchCategoryList = async (category = 'w', page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get('/word/list', {
+      params: {
+        category,  // 'c', 'v', 'w' 중 하나 ('w' 사용)
+        page,      // 페이지 번호
+        size,      // 페이지 당 단어 수 (9개)
+        sort       // 정렬 조건 (id 기준 오름차순)
+      }
+    });
+
+    // API 응답 데이터 확인
+    console.log('API 응답 데이터:', response.data);
+
+    // 성공 여부와 데이터를 확인하여 반환
+    if (response.data.success) {
+      return response.data.data.content.map(item => ({
+        id: item.id,
+        title: item.title
+      }));
+    } else {
+      throw new Error(response.data.message || '단어 목록을 불러오는 데 실패했습니다.');
+    }
+
+  } catch (error) {
+    console.error('API 호출 중 오류:', error);
+    handleError(error);
+  }
+};
+
 
 // 회원가입 API
 export const registerUser = async (email, password, nickname, hand, passwordCheck, emailCode) => {
@@ -248,20 +286,10 @@ export const fetchProfileInfo = async () => {
   }
 };
 
-// 단어 정보 불러오기 API
-export const fetchWordInfo = async (wordId) => {
-  try {
-    const response = await apiClient.get(`/word?word-id=${wordId}`);
-    return response.data;
-  } catch (error) {
-    handleError(error);
-  }
-};
-
 // AccessToken 가져오기 API
 export const fetchAccessToken = async (code) => {
   try {
-    const response = await apiClient.post('/auth/sign-in/kakao', { code });
+    const response = await apiClient.get(`/auth/sign-in/kakao`, { params: { code } });
     if (response.data.success) {
       localStorage.setItem('accessToken', response.data.data.accessToken);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
@@ -293,32 +321,81 @@ export const fetchRankingData = async () => {
 };
 
 // 퀴즈 레벨1 불러오기 API
-export const fetchLevel1Quiz = async () => {
+export const fetchLevel1Quiz = async (quizId) => {
   try {
-    const response = await apiClient.get('/quiz/level-1?quiz-id=1');
+    const url = `/level-1?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
+    console.log(`Fetching Level 1 Quiz from URL: ${url}`); // URL 로그 추가
+    
+    const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
     return response.data;
   } catch (error) {
-    handleError(error);
+    if (error.response) {
+      console.error("API request failed:", error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error("No response received from API:", error.request);
+    } else {
+      console.error("Error setting up API request:", error.message);
+    }
+    throw error;
   }
 };
 
 // 퀴즈 레벨2 불러오기 API
-export const fetchLevel2Quiz = async () => {
+export const fetchLevel2Quiz = async (quizId = 100) => {
   try {
-    const response = await apiClient.get('/quiz/level-2?quiz-id=20');
-    return response.data;
+    const url = `level-2?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
+    console.log(`Fetching Level 2 Quiz from URL: ${url}`); // URL 로그 추가
+
+    const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
+
+    if (response && response.data) {
+      const quizData = response.data.data; // 응답에서 데이터 할당
+      console.log('퀴즈 데이터:', quizData); // 퀴즈 데이터 구조 확인
+
+      const correctAnswer = quizData.answer;
+
+      // `quizData.content`가 배열인지 확인하고 처리
+      const contentArray = quizData.content;
+      if (!Array.isArray(contentArray) || contentArray.length === 0) {
+        console.error('contentArray가 비어 있습니다.');
+        throw new Error('Invalid quiz data format: contentArray is empty.');
+      }
+
+      // 4지선다 문제 구성 (랜덤하게 보기 생성)
+      const options = shuffleArray([...contentArray, correctAnswer]).slice(0, 4); // 4개의 보기로 자르기
+
+      return {
+        objectUrl: quizData.objectUrl, // 이미지 URL
+        options, // 4지선다 보기
+        correctAnswer, // 정답
+        isStarred: quizData.isStarred || false, // 즐겨찾기 여부
+      };
+    }
   } catch (error) {
-    handleError(error);
+    if (error.response) {
+      console.error("API request failed:", error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error("No response received from API:", error.request);
+    } else {
+      console.error("Error setting up API request:", error.message);
+    }
+    throw error;
   }
 };
 
+const shuffleArray = (array) => {
+  return array.sort(() => Math.random() - 0.5);
+};
+
 // 퀴즈 레벨3 불러오기 API
-export const fetchLevel3Quiz = async () => {
+export const fetchLevel3Quiz = async (quizId = 200) => {
   try {
-    const response = await apiClient.get('/quiz/level-3?quiz-id=30');
+    const response = await apiClient.get(`level-3?quiz-id=${quizId}`);
+    console.log('퀴즈 레벨3 데이터:', response.data); // 콘솔에 데이터 출력
     return response.data;
   } catch (error) {
-    handleError(error);
+    console.error('퀴즈 레벨3 데이터를 불러오는 중 오류:', error);
+    throw error;
   }
 };
 
@@ -346,26 +423,8 @@ export const handleQuizAnswer = async (quizId) => {
 const handleError = (error) => {
   if (error.response) {
     const { status, data } = error.response;
-    
-    switch (status) {
-      case 400:
-        console.error('잘못된 요청: ', data.message);
-        break;
-      case 401:
-        console.error('인증 실패: ', data.message);
-        break;
-      case 404:
-        console.error('잘못된 경로 요청: ', data.message);
-        break;
-      case 500:
-        console.error('서버 오류: ', data.message);
-        break;
-      default:
-        console.error('알 수 없는 오류: ', data.message);
-    }
+    console.error(`Error status: ${status}, data: ${JSON.stringify(data)}`);
   } else {
-    console.error('요청 중 오류 발생:', error);
+    console.error('Network error or no response:', error);
   }
-
-  throw error.response ? error.response.data : error;
 };
