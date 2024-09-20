@@ -19,6 +19,7 @@ html, body {
   align-items: center;
   justify-content: center;
   background-color: #DBDFEA;
+  padding: 20px;
   position: relative;
 }
 
@@ -29,15 +30,24 @@ html, body {
   background: none;
   border: none;
   font-size: 24px;
+  color: #333;
   cursor: pointer;
+  padding: 10px;
 }
 
-/* WordDetail.css */
+.back-button:hover {
+  color: #000;
+}
+
 .word-text {
-  font-size: 48px; /* 글씨 크기를 조정하세요 */
-  color: black; /* 글씨 색상 설정 */
+  font-size: 64px;  /* 글자 크기 조정 */
+  color: black;
   margin-top: 20px;
   text-align: center;
+  word-wrap: break-word;  /* 긴 단어가 있을 경우 줄 바꿈 */
+  max-width: 80%;  /* 너무 긴 텍스트가 넘치지 않도록 설정 */
+  margin-left: 10%; /* 단어가 왼쪽에 잘 붙지 않도록 여백 추가 */
+  margin-right: 10%; /* 양쪽 여백 균형 맞추기 */
 }
 
 .cam-placeholder {
@@ -49,8 +59,7 @@ html, body {
   background-color: #55679C; /* 파란색 배경 */
   font-size: 48px;
   color: #FFF;
-  width: 100%;
-  height: 100%;
+  padding: 20px; /* 적절한 패딩 추가 */
 }
 
 .video-title {
@@ -60,8 +69,9 @@ html, body {
 }
 
 .video-feed {
-  max-width: 90%; /* 비디오 크기를 조절하여 뷰포트를 넘지 않도록 설정 */
-  max-height: 80%; /* 비디오 크기 조절 */
+  max-width: 100%; /* 비디오 피드가 가로 크기에 맞게 설정 */
+  max-height: 80vh; /* 비디오 피드가 화면의 80%를 넘지 않도록 설정 */
   border-radius: 10px;
   background-color: #FFF; /* 비디오 주위에 흰색 배경 추가 */
+  object-fit: cover; /* 비디오 크기가 화면에 맞도록 조정 */
 }

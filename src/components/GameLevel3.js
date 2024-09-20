@@ -6,23 +6,38 @@ import './GameLevel3.css';
 
 function GameLevel3() {
   const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
-  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태 추가
+  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
   const [isLoading, setIsLoading] = useState(true);
+  const [renderFlag, setRenderFlag] = useState(false); // 강제로 리렌더링을 트리거하는 플래그
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadQuizData(200); // quiz-id 200으로 설정
+    loadQuizData(200); // quiz-id 200 사용
   }, []);
+
+  useEffect(() => {
+    console.log('즐겨찾기 상태 변경됨:', isFavorite);
+  }, [isFavorite]);
+
+  // renderFlag를 강제로 상태를 반전시켜서 리렌더링을 유도
+  useEffect(() => {
+    console.log('리렌더링 플래그:', renderFlag);
+  }, [renderFlag]);
+
+  useEffect(() => {
+    console.log('isFavorite 상태 변경:', isFavorite);
+  }, [isFavorite]);  
 
   const loadQuizData = async (quizId) => {
     try {
       const response = await fetchLevel3Quiz(quizId); // API 호출하여 데이터 가져오기
-      if (response && response.success) {
-        setCurrentQuestion(response.data.content); // 퀴즈 내용 설정
-        setIsFavorite(response.data.isStarred || false); // 즐겨찾기 상태 설정
+      if (response.success) {
+        setCurrentQuestion(response.data); // 퀴즈 데이터 설정
+        setIsFavorite(response.data.starred || false); // 즐겨찾기 상태 설정
         setIsLoading(false); // 로딩 상태 해제
+        console.log("퀴즈 데이터 로드:", response.data.starred);
       } else {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response?.message);
+        console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
       }
     } catch (error) {
       console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
@@ -30,9 +45,18 @@ function GameLevel3() {
   };
 
   const handleFavoriteClick = async () => {
+    if (!currentQuestion || !currentQuestion.id) {
+      console.error('퀴즈 ID가 설정되지 않았습니다.');
+      return;
+    }
+
     try {
-      await toggleFavorite(currentQuestion.id); // 즐겨찾기 토글 API 호출
-      setIsFavorite(!isFavorite); // 즐겨찾기 상태 토글
+      const response = await toggleFavorite(currentQuestion.id); // 즐겨찾기 토글
+      if (response.success) {
+        setIsFavorite(!isFavorite); // 상태를 반전
+        console.log('즐겨찾기 클릭 후 상태:', !isFavorite); // 상태 확인
+        setRenderFlag(!renderFlag); // 리렌더링 트리거를 반전시켜 리렌더링 유도
+      }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
     }
@@ -50,13 +74,13 @@ function GameLevel3() {
           {isLoading ? (
             <span>Loading...</span>
           ) : (
-            <span className="word-item">{currentQuestion}</span> // 퀴즈 내용 표시
+            <span className="word-item">{currentQuestion?.content}</span> // 퀴즈 내용 표시
           )}
         </div>
       </div>
       <div className="game-level3-right">
         <button 
-          className={`favorite-button ${isFavorite ? 'active' : ''}`} 
+          className={`favorite-button ${isFavorite ? 'active' : ''}`} // 상태에 따라 클래스 변경
           onClick={handleFavoriteClick}
         >
           ★

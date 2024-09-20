@@ -16,7 +16,7 @@ function GameLevel2() {
   const [score, setScore] = useState(0); // 점수
   const [questionCount, setQuestionCount] = useState(0); // 문제 개수
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
-
+  const [quizId, setQuizId] = useState(100); // 퀴즈 ID 상태 추가
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,8 +25,7 @@ function GameLevel2() {
 
   const generateQuestion = async () => {
     try {
-      const randomQuizId = 100; // 100번만 호출 (임시)
-      const response = await fetchLevel2Quiz(randomQuizId); // API 호출
+      const response = await fetchLevel2Quiz(quizId); // API 호출
       console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
   
       if (response) {
@@ -35,19 +34,21 @@ function GameLevel2() {
         setOptions(response.options); // 4지선다 보기 설정
         setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
       } else {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다.'); // response가 없을 때 에러 처리
+        console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
       }
     } catch (error) {
-      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error); // 오류 메시지 출력
+      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
     }
-  };  
+  };
 
   const handleOptionClick = async (option) => {
     if (option === correctAnswer) {
       setIsCorrect(true);
       setScore(score + 1);
       try {
-        await handleQuizAnswer(correctAnswer); // 정답 처리 API 호출
+        console.log('Sending quizId:', quizId, 'and correctAnswer:', correctAnswer); // 로그 추가
+        // quizId와 correctAnswer를 함께 전달
+        await handleQuizAnswer(quizId, correctAnswer); 
       } catch (error) {
         console.error('퀴즈 정답 처리 중 오류 발생:', error);
       }
@@ -60,8 +61,10 @@ function GameLevel2() {
 
   const handleFavoriteClick = async () => {
     try {
-      await toggleFavorite(100); // 100번 퀴즈 ID로 즐겨찾기 토글
-      setIsFavorite(!isFavorite); // 즐겨찾기 상태 변경
+      const response = await toggleFavorite(quizId); // 퀴즈 ID로 즐겨찾기 토글
+      if (response.success) {
+        setIsFavorite(!isFavorite); // 즐겨찾기 상태 변경
+      }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
     }

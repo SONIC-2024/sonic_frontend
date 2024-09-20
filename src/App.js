@@ -18,7 +18,9 @@ import Login from './components/Login';
 import Register from './components/Register';
 import VideoFeed from './components/VideoFeed';
 import OAuthCallback from './components/OAuthCallback'; // 추가된 OAuthCallback 컴포넌트
+import Starquiz from './components/Starquiz'; // Starquiz 페이지 추가
 import GlobalStyle from './styles/GlobalStyle';
+import StarquizDetail from './components/StarquizDetail'; // StarquizDetail 페이지 추가
 
 function App() {
   return (
@@ -42,8 +44,10 @@ function App() {
           <Route path="/game-level1" element={<GameLevel1 />} />
           <Route path="/game-level2" element={<GameLevel2 />} />
           <Route path="/game-level3" element={<GameLevel3 />} />
-          <Route path="/video-feed" element={<VideoFeed />} /> 
-          <Route path="/oauth" element={<OAuthCallback />} /> {/* "/oauth" 경로 추가 */}
+          <Route path="/video-feed" element={<VideoFeed />} />
+          <Route path="/oauth" element={<OAuthCallback />} />
+          <Route path="/starquiz" element={<Starquiz />} />
+          <Route path="/starquizdetail/:level/:quizId" element={<StarquizDetail />} /> {/* 퀴즈 즐겨찾기 상세 경로 */}
         </Routes>
       </Router>
     </>

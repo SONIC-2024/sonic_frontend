@@ -208,6 +208,16 @@ function Profile() {
     }
   };
 
+  const dayMap = {
+    '월': 'mon',
+    '화': 'tue',
+    '수': 'wed',
+    '목': 'thu',
+    '금': 'fri',
+    '토': 'sat',
+    '일': 'sun',
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -319,22 +329,22 @@ function Profile() {
             </div>
           </div>
           <div className="profile-card wide">
-            <button className="view-button">단어 다시 보기</button>
-          </div>
-          <div className="profile-card wide">
-            <button className="view-button">문제 다시 보기</button>
-          </div>
+        <button className="view-button" onClick={() => navigate('/starquiz')}>
+          퀴즈 즐겨찾기
+        </button>
+      </div>
           <div className="profile-card wide">
             <h3>이번 주 출석</h3>
             <div className="attendance">
               {['월', '화', '수', '목', '금', '토', '일'].map((day, idx) => (
                 <div key={idx} className="day">
                   <p>{day}</p>
-                  <div className={`circle ${attendance && attendance[day.toLowerCase()] ? 'filled' : ''}`}></div>
+                  <div className={`circle ${attendance && attendance[dayMap[day]] ? 'filled' : ''}`}></div>
                 </div>
               ))}
             </div>
           </div>
+
           <div className="profile-card wide">
             <h3>최대 연속출석 일수</h3>
             <p className="streak">{attendance ? `${attendance.continuous} days` : 'Loading...'}</p>

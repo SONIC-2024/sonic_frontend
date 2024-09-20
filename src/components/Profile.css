@@ -176,6 +176,10 @@
   margin-top: 5px;
 }
 
+.circle.filled {
+  background-color: #4caf50; /* 출석한 날의 색상 */
+}
+
 .streak {
   font-size: 18px;
   font-weight: bold;

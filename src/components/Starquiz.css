@@ -1,0 +1,113 @@
+/* 전체 컨테이너 */
+.starquiz-container {
+  padding: 40px;
+  background-color: #3F4E78;
+  min-height: 100vh;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Arial', sans-serif;
+  color: #fff;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+/* 제목 */
+.starquiz-container h2 {
+  color: #fff;
+  font-size: 2.6rem;
+  margin-bottom: 40px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 레벨 선택 버튼 컨테이너 */
+.quiz-level-buttons {
+  margin-bottom: 40px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* 레벨 버튼 스타일 */
+.quiz-level-button {
+  padding: 15px 30px;
+  background-color: #5D6C99;
+  border: 2px solid #BFC8E2;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 활성화된 버튼 스타일 */
+.quiz-level-button.active {
+  background-color: #8294C4;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* 버튼 호버 효과 */
+.quiz-level-button:hover {
+  background-color: #4C5B83;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* 로딩 텍스트 */
+.loading-text {
+  color: #BFC8E2;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 30px;
+  animation: pulse 1s infinite;
+}
+
+/* 로딩 텍스트 애니메이션 */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* 퀴즈 리스트 */
+.quiz-list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 30px;
+}
+
+/* 퀴즈 아이템 */
+.quiz-item {
+  padding: 20px;
+  border: 2px solid #d1d5db;
+  margin: 15px auto;
+  max-width: 650px;
+  background-color: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+  font-size: 1.3rem;
+  color: #3F4E78;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 퀴즈 아이템 호버 효과 */
+.quiz-item:hover {
+  background-color: #e2e6f1;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+/* 퀴즈 아이템 텍스트 강조 */
+.quiz-item span {
+  font-weight: bold;
+  color: #3F4E78;
+}

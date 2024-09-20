@@ -1,46 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Container from '../styles/Container';
+import { fetchWordInfo } from '../api'; // 자음 세부 정보를 가져오는 API
 import './ConsonantDetail.css';
-
-const consonantImages = [
-  '/images/consonant1.png',
-  '/images/consonant2.png',
-  '/images/consonant3.png',
-  '/images/consonant4.png',
-  '/images/consonant5.png',
-  '/images/consonant6.png',
-  '/images/consonant7.png',
-  '/images/consonant8.png',
-  '/images/consonant9.png',
-  '/images/consonant10.png',
-  '/images/consonant11.png',
-  '/images/consonant12.png',
-  '/images/consonant13.png',
-  '/images/consonant14.png',
-  '/images/consonant15.png',
-  '/images/consonant16.png',
-  '/images/consonant17.png',
-  '/images/consonant18.png',
-  '/images/consonant19.png',
-];
-
-const consonants = ['ㄱ', 'ㄴ', 'ㄷ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ'];
 
 function ConsonantDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
+  const [consonant, setConsonant] = useState(null); // 자음 세부 정보 상태
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (index) {
+      loadConsonantDetail();
+    }
+  }, [index]);
+
+  const loadConsonantDetail = async () => {
+    try {
+      setLoading(true);
+      const consonantData = await fetchWordInfo(index); // 자음 세부 정보를 가져오는 API 호출
+      if (consonantData) {
+        setConsonant(consonantData);
+      } else {
+        setError('자음 정보를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      setError('자음 정보를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
+  if (loading) {
+    return <div>로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
   return (
     <Container className="consonant-detail-container">
       <button className="back-button" onClick={handleGoBack}>&larr;</button>
       <div className="detail-content">
-        <img src={consonantImages[index]} alt={`consonant${index + 1}`} className="consonant-detail-image" />
-        <p className="consonant-character">{consonants[parseInt(index)]}</p>
+        {consonant ? (
+          <>
+            <img src={consonant.objectUrl} alt={`consonant${index}`} className="consonant-detail-image" />
+            <p className="consonant-character">{consonant.title}</p>
+          </>
+        ) : (
+          <p>자음 정보를 불러올 수 없습니다.</p>
+        )}
       </div>
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>

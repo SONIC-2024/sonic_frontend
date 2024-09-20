@@ -1,0 +1,100 @@
+.starquiz-detail-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+  
+  .back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 100;
+  }
+  
+  .favorite-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 36px;
+    cursor: pointer;
+    color: transparent;
+    text-shadow: 0 0 0 yellow;
+    z-index: 100;
+    outline: none;
+  }
+  
+  .favorite-button.active {
+    color: yellow;
+    text-shadow: none;
+  }
+  
+  .quiz-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: #FFEAD2;
+  }
+  
+  .quiz-question {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .submit-button {
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    color: #FFEAD2;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+  }
+  
+  .submit-button:hover {
+    background-color: #45a049;
+  }
+  
+  .result-message {
+    font-size: 18px;
+    color: #333;
+    margin-top: 20px;
+  }
+  
+  .live-feed {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #55679C;
+    height: 100vh;
+  }
+  
+  .video-title {
+    font-size: 1rem;
+    color: white;
+    margin-bottom: 10px;
+  }
+  
+  .video-feed {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background-color: #FFF;
+    object-fit: cover;
+    margin-top: 40px;
+  }
+  

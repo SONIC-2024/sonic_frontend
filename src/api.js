@@ -81,6 +81,69 @@ export const fetchWordInfo = async (wordId) => {
   }
 };
 
+// 자음 목록 불러오기 API
+export const fetchConsonantsList = async (page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get('/word/list', {
+      params: {
+        category: 'c', // 자음 카테고리
+        page,          // 페이지 번호
+        size,          // 페이지 당 단어 수 (9개)
+        sort           // 정렬 조건 (id 기준 오름차순)
+      }
+    });
+
+    // API 응답 데이터 확인
+    console.log('API 응답 데이터 (자음):', response.data);
+
+    // 성공 여부와 데이터를 확인하여 반환
+    if (response.data.success) {
+      return response.data.data.content.map(item => ({
+        id: item.id,
+        title: item.title
+      }));
+    } else {
+      throw new Error(response.data.message || '자음 목록을 불러오는 데 실패했습니다.');
+    }
+
+  } catch (error) {
+    console.error('API 호출 중 오류 (자음):', error);
+    handleError(error);
+  }
+};
+
+// 모음 목록 불러오기 API
+export const fetchVowelList = async (page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get('/word/list', {
+      params: {
+        category: 'v',  // 'v'는 모음 카테고리
+        page,           // 페이지 번호
+        size,           // 페이지 당 모음 수
+        sort            // 정렬 조건 (id 기준 오름차순)
+      }
+    });
+
+    console.log('모음 API 응답:', response.data);
+
+    if (response.data.success) {
+      return {
+        vowels: response.data.data.content.map(item => ({
+          id: item.id,
+          title: item.title,
+          objectUrl: item.objectUrl
+        })),
+        totalVowels: response.data.data.totalElements // 전체 모음 개수를 반환
+      };
+    } else {
+      throw new Error(response.data.message || '모음 목록을 불러오는 데 실패했습니다.');
+    }
+  } catch (error) {
+    console.error('모음 API 호출 중 오류:', error);
+    handleError(error);
+  }
+};
+
 // 단어 목록 불러오기 API
 export const fetchCategoryList = async (category = 'w', page = 0, size = 9, sort = 'id,asc') => {
   try {
@@ -314,8 +377,10 @@ export const fetchUserName = async () => {
 export const fetchRankingData = async () => {
   try {
     const response = await apiClient.get('/ranking');
+    console.log('Ranking API Response:', response.data); // 응답 확인
     return response.data;
   } catch (error) {
+    console.error('API Error:', error);
     handleError(error);
   }
 };
@@ -323,7 +388,7 @@ export const fetchRankingData = async () => {
 // 퀴즈 레벨1 불러오기 API
 export const fetchLevel1Quiz = async (quizId) => {
   try {
-    const url = `/level-1?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
+    const url = `/quiz/level-1?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
     console.log(`Fetching Level 1 Quiz from URL: ${url}`); // URL 로그 추가
     
     const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
@@ -343,7 +408,7 @@ export const fetchLevel1Quiz = async (quizId) => {
 // 퀴즈 레벨2 불러오기 API
 export const fetchLevel2Quiz = async (quizId = 100) => {
   try {
-    const url = `level-2?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
+    const url = `/quiz/level-2?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
     console.log(`Fetching Level 2 Quiz from URL: ${url}`); // URL 로그 추가
 
     const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
@@ -390,7 +455,7 @@ const shuffleArray = (array) => {
 // 퀴즈 레벨3 불러오기 API
 export const fetchLevel3Quiz = async (quizId = 200) => {
   try {
-    const response = await apiClient.get(`level-3?quiz-id=${quizId}`);
+    const response = await apiClient.get(`/quiz/level-3?quiz-id=${quizId}`);
     console.log('퀴즈 레벨3 데이터:', response.data); // 콘솔에 데이터 출력
     return response.data;
   } catch (error) {
@@ -400,22 +465,88 @@ export const fetchLevel3Quiz = async (quizId = 200) => {
 };
 
 // 즐겨찾기 등록 및 취소 API
-export const toggleFavorite = async (itemId) => {
+export const toggleFavorite = async (quizId) => {
   try {
-    const response = await apiClient.post(`/quiz?star&quiz-id=1`, { id: itemId });
+    // 문제 ID를 동적으로 경로에 추가
+    const response = await apiClient.post(`/quiz/star?quiz-id=${quizId}`);
+    console.log('즐겨찾기 응답:', response.data);
     return response.data;
   } catch (error) {
-    handleError(error);
+    if (error.response) {
+      console.error('Error status:', error.response.status, 'data:', error.response.data);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
   }
 };
 
-// 퀴즈 정답 처리 API
-export const handleQuizAnswer = async (quizId) => {
+// 정답 처리 API
+export const handleQuizAnswer = async (quizId, answer) => {
   try {
-    const response = await apiClient.post(`/quiz?quiz-id=1`, { id: quizId });
+    // quizId와 answer를 요청 본문(body)으로 전달
+    const response = await apiClient.post(`/quiz?quiz-id=${quizId}`, {
+      quizId,   // quizId는 본문에 포함
+      answer,   // 정답도 본문에 포함
+    });
+    console.log('정답 처리 응답:', response.data);
     return response.data;
   } catch (error) {
-    handleError(error);
+    if (error.response) {
+      console.error('Error status:', error.response.status, 'data:', error.response.data);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+// 즐겨찾기 등록 퀴즈 1
+export const fetchFavoriteLevel1Quizzes = async (page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get(`/quiz/star/level-1`, {
+      params: { page, size, sort }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('레벨 1 즐겨찾기 퀴즈를 불러오는 중 오류:', error);
+    throw error;
+  }
+};
+
+// 즐겨찾기 등록 퀴즈 2
+export const fetchFavoriteLevel2Quizzes = async (page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get(`/quiz/star/level-2`, {
+      params: { page, size, sort }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('레벨 2 즐겨찾기 퀴즈를 불러오는 중 오류:', error);
+    throw error;
+  }
+};
+
+// 즐겨찾기한 레벨 3 퀴즈 목록 불러오기
+export const fetchFavoriteLevel3Quizzes = async (page = 0, size = 9, sort = 'id,asc') => {
+  try {
+    const response = await apiClient.get(`/quiz/star/level-3`, {
+      params: { page, size, sort }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('레벨 3 즐겨찾기 퀴즈를 불러오는 중 오류:', error);
+    throw error;
+  }
+};
+
+export const fetchQuizDetail = async (quizId) => {
+  try {
+    const response = await apiClient.get(`/quiz/${quizId}`);
+    return response.data;
+  } catch (error) {
+    console.error('퀴즈 세부 정보를 가져오는 중 오류:', error);
+    throw error;
   }
 };
 
