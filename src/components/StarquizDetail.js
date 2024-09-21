@@ -11,11 +11,11 @@ function StarquizDetail() {
 
   useEffect(() => {
     const loadQuizDetail = async () => {
-      console.log(`Fetching quiz detail for quizId: ${quizId}`);  // quizId 로그 추가
       setIsLoading(true);
       setError(null);  // 새로운 요청 전에 오류 초기화
       try {
-        const response = await fetchQuizDetail(quizId);  // quizId로 API 호출
+        console.log(`Fetching quiz detail for quizId: ${quizId}`);  // quizId 로그 추가
+        const response = await fetchQuizDetail(quizId);  // API 호출
         console.log('Response from server:', response);  // 서버 응답 로그
         setQuizDetail(response.data);
       } catch (error) {
@@ -25,7 +25,7 @@ function StarquizDetail() {
         setIsLoading(false);
       }
     };
-
+  
     loadQuizDetail();
   }, [quizId]);
 
@@ -36,11 +36,12 @@ function StarquizDetail() {
   const handleGoToLevel = () => {
     // level에 따라 학습 화면으로 분기
     if (level === '1') {
-      navigate(`/game-level1`); // 레벨 1 학습 화면으로 이동
+      console.log('Navigating to game-level1 with quizId:', quizId); // 로그 추가
+      navigate(`/game-level1/${quizId}`); // 레벨 1 학습 화면으로 이동
     } else if (level === '2') {
-      navigate(`/game-level2`); // 레벨 2 학습 화면으로 이동
+      navigate(`/game-level2/${quizId}`); // 레벨 2 학습 화면으로 이동
     } else if (level === '3') {
-      navigate(`/game-level3`); // 레벨 3 학습 화면으로 이동
+      navigate(`/game-level3/${quizId}`); // 레벨 3 학습 화면으로 이동
     }
   };
 

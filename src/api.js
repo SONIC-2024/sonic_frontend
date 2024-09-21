@@ -392,6 +392,7 @@ export const fetchLevel1Quiz = async (quizId) => {
     console.log(`Fetching Level 1 Quiz from URL: ${url}`); // URL 로그 추가
     
     const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
+    console.log('API response:', response); // API 응답 로그 추가
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -542,10 +543,12 @@ export const fetchFavoriteLevel3Quizzes = async (page = 0, size = 9, sort = 'id,
 
 export const fetchQuizDetail = async (quizId) => {
   try {
-    const response = await apiClient.get(`/quiz/${quizId}`);
+    console.log(`Fetching quiz detail for quizId: ${quizId}`);  // quizId 로그 추가
+    const response = await apiClient.get(`/quiz/${quizId}`);  // API 호출
+    console.log('Response from server:', response);  // 서버 응답 로그
     return response.data;
   } catch (error) {
-    console.error('퀴즈 세부 정보를 가져오는 중 오류:', error);
+    console.error('퀴즈 세부 정보를 가져오는 중 오류:', error);  // 오류 출력
     throw error;
   }
 };

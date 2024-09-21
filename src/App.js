@@ -10,17 +10,17 @@ import Vowels from './components/Vowels';
 import Words from './components/Words';
 import ConsonantDetail from './components/ConsonantDetail';
 import VowelDetail from './components/VowelDetail';
-import WordDetail from './components/WordDetail'; // WordDetail 추가
+import WordDetail from './components/WordDetail'; 
 import GameLevel1 from './components/GameLevel1';
 import GameLevel2 from './components/GameLevel2';
 import GameLevel3 from './components/GameLevel3';
 import Login from './components/Login';
 import Register from './components/Register';
 import VideoFeed from './components/VideoFeed';
-import OAuthCallback from './components/OAuthCallback'; // 추가된 OAuthCallback 컴포넌트
-import Starquiz from './components/Starquiz'; // Starquiz 페이지 추가
+import OAuthCallback from './components/OAuthCallback'; 
+import Starquiz from './components/Starquiz'; 
 import GlobalStyle from './styles/GlobalStyle';
-import StarquizDetail from './components/StarquizDetail'; // StarquizDetail 페이지 추가
+import StarquizDetail from './components/StarquizDetail'; 
 
 function App() {
   return (
@@ -41,9 +41,18 @@ function App() {
           <Route path="/consonant-detail/:index" element={<ConsonantDetail />} />
           <Route path="/vowel-detail/:index" element={<VowelDetail />} />
           <Route path="/word-detail/:id" element={<WordDetail />} />
-          <Route path="/game-level1" element={<GameLevel1 />} />
-          <Route path="/game-level2" element={<GameLevel2 />} />
-          <Route path="/game-level3" element={<GameLevel3 />} />
+          
+          {/* 추가된 경로 */}
+          <Route path="/game-level1" element={<GameLevel1 />} />  {/* quizId 없이 기본 경로 */}
+          <Route path="/game-level1/:quizId" element={<GameLevel1 />} />  {/* quizId에 따라 다르게 표시 */}
+          
+          {/* 레벨 2와 3에 대한 기본 경로 추가 */}
+          <Route path="/game-level2" element={<GameLevel2 />} />  {/* quizId 없이 기본 경로 */}
+          <Route path="/game-level2/:quizId" element={<GameLevel2 />} />  {/* quizId에 따라 다르게 표시 */}
+          
+          <Route path="/game-level3" element={<GameLevel3 />} />  {/* quizId 없이 기본 경로 */}
+          <Route path="/game-level3/:quizId" element={<GameLevel3 />} />  {/* quizId에 따라 다르게 표시 */}
+
           <Route path="/video-feed" element={<VideoFeed />} />
           <Route path="/oauth" element={<OAuthCallback />} />
           <Route path="/starquiz" element={<Starquiz />} />
