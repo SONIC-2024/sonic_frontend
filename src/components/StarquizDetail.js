@@ -113,7 +113,7 @@ function StarquizDetail() {
   
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
+        <img src="http://localhost:5000/video_feed" alt="Live Video Feed" className="video-feed" />
       </div>
     </Container>
   );
