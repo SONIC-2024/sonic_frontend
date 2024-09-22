@@ -17,14 +17,16 @@ function GameLevel2() {
   const [score, setScore] = useState(0); // 점수
   const [questionCount, setQuestionCount] = useState(0); // 문제 개수
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
-  const [quizId, setQuizId] = useState(100); // 퀴즈 ID 상태 추가
+  const [quizId, setQuizId] = useState(null); // 퀴즈 ID 상태
   const navigate = useNavigate();
 
   useEffect(() => {
-    generateQuestion(); // 첫 번째 문제 로드
+    const randomQuizId = Math.floor(Math.random() * 41) + 100; // 100에서 140 사이의 랜덤 ID 생성
+    setQuizId(randomQuizId); // 랜덤하게 생성된 quizId 설정
+    generateQuestion(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
   }, []);
 
-  const generateQuestion = async () => {
+  const generateQuestion = async (quizId) => {
     try {
       const response = await fetchLevel2Quiz(quizId); // API 호출
       console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
@@ -87,7 +89,9 @@ function GameLevel2() {
     if (questionCount >= 10) {
       navigate('/'); // 10문제를 완료한 경우 홈으로 이동
     } else {
-      generateQuestion(); // 다음 문제로 이동
+      const randomQuizId = Math.floor(Math.random() * 41) + 100; // 다음 퀴즈도 랜덤하게 설정
+      setQuizId(randomQuizId);
+      generateQuestion(randomQuizId); // 다음 문제로 이동
     }
   };
 

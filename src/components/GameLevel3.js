@@ -12,7 +12,8 @@ function GameLevel3() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadQuizData(200); // quiz-id 200 사용
+    const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
+    loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
   }, []);
 
   useEffect(() => {
@@ -45,11 +46,11 @@ function GameLevel3() {
   };
 
   const handleFavoriteClick = async () => {
-    const favoriteQuizId = 200;  // 즐겨찾기에 넘길 ID는 항상 200
+    const favoriteQuizId = currentQuestion?.quiz_id || 200;  // 현재 퀴즈의 ID 사용
   
     try {
-      console.log("즐겨찾기에 사용할 퀴즈 ID:", favoriteQuizId); // 200을 출력하여 확인
-      const response = await toggleFavorite(favoriteQuizId); // 항상 200으로 즐겨찾기 요청
+      console.log("즐겨찾기에 사용할 퀴즈 ID:", favoriteQuizId); // 현재 퀴즈 ID 확인
+      const response = await toggleFavorite(favoriteQuizId); // 현재 퀴즈 ID로 즐겨찾기 요청
       if (response.success) {
         setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
         console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
