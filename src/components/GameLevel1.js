@@ -31,6 +31,7 @@ function GameLevel1() {
   const [mlIds, setMlIds] = useState([]); // ML 서버용 id 배열
   const [popupMessage, setPopupMessage] = useState(''); // 팝업 메시지 상태
   const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부 상태
+  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
 
   const navigate = useNavigate();
 
@@ -55,6 +56,42 @@ function GameLevel1() {
       }
     } catch (error) {
       console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
+    }
+  };
+
+  // ML 서버로 지문자 ID 전송 함수
+  const sendIdToMl = async (id) => {
+    try {
+      const response = await fetch('http://localhost:5000/finger_quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }), // 지문자 ID를 ML 서버로 전송
+      });
+
+      const result = await response.json();
+      console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
+      setMlResult(result.result); // 0 또는 1의 결과 저장
+    } catch (error) {
+      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
+    }
+  };
+
+  // 지문자 처리 함수
+  const handleNextCharacter = async () => {
+    const currentId = mlIds[currentCharacterIndex]; // 현재 지문자의 ID
+
+    if (currentId) {
+      await sendIdToMl(currentId); // 현재 지문자의 ID를 ML 서버로 전송
+    }
+
+    // 정답일 경우 다음 지문자로 이동
+    if (mlResult === 1) {
+      setCurrentCharacterIndex((prevIndex) => (prevIndex + 1) % mlIds.length); // 다음 지문자로 이동
+    } else {
+      // 오답일 경우 같은 지문자 유지
+      console.log('오답입니다. 다시 시도하세요.');
     }
   };
 
@@ -104,6 +141,7 @@ function GameLevel1() {
                 <span className="current-character">
                   현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content[currentCharacterIndex]}
                 </span>
+                <button onClick={handleNextCharacter}>다음 지문자</button>
               </div>
             </div>
           )}

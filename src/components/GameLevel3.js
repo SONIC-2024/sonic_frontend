@@ -8,7 +8,6 @@ function GameLevel3() {
   const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
   const [isLoading, setIsLoading] = useState(true);
-  const [renderFlag, setRenderFlag] = useState(false); // 강제로 리렌더링을 트리거하는 플래그
   const [favoriteMessage, setFavoriteMessage] = useState(''); // 즐겨찾기 팝업 메시지
   const [showFavoritePopup, setShowFavoritePopup] = useState(false); // 즐겨찾기 팝업 상태
   const navigate = useNavigate();

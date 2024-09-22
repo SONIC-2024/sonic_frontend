@@ -11,6 +11,7 @@ function StarquizDetail() {
   const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0); // 현재 문자 인덱스 추가
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null); // 오류 상태 추가
+  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
   const navigate = useNavigate(); // navigate 함수 사용
 
   useEffect(() => {
@@ -19,17 +20,11 @@ function StarquizDetail() {
         const response = await fetchQuizDetail(level, quizId);
         console.log('API 응답:', response.data);  // 콘솔에 전체 API 응답 구조 확인
         
-        // 레벨 1에 한해 quiz_id가 30 이하인 경우만 데이터를 설정
-        if (level === '1') {
-          if (response.data.quiz_id <= 30) {
-            setQuizDetail(response.data);
-            setCurrentQuestion(response.data); // currentQuestion에 퀴즈 데이터를 설정
-          } else {
-            setError('해당 퀴즈는 레벨 1의 범위에 맞지 않습니다.'); // quiz_id가 30 이상일 경우
-          }
-        } else {
-          setQuizDetail(response.data); // 다른 레벨에 대해서는 필터링 없이 설정
+        if (response.data.quiz_id <= 30 || level !== '1') {
+          setQuizDetail(response.data);
           setCurrentQuestion(response.data);
+        } else {
+          setError('해당 퀴즈는 레벨 1의 범위에 맞지 않습니다.');
         }
       } catch (error) {
         console.error('퀴즈 정보를 불러오는 중 오류:', error);
@@ -41,8 +36,38 @@ function StarquizDetail() {
     loadQuizDetail();
   }, [level, quizId]);
 
+  // ML 서버로 지문자 ID 보내기 함수
+  const sendIdToMl = async (id) => {
+    try {
+      const response = await fetch('http://localhost:5000/finger_quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }), // ML 서버로 지문자 ID 전송
+      });
+
+      const result = await response.json();
+      console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
+      setMlResult(result.result); // 결과 저장 (0 또는 1)
+    } catch (error) {
+      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
+    }
+  };
+
   const handleGoBack = () => {
     navigate(`/starquiz`); // Starquiz 페이지로 돌아가기
+  };
+
+  const handleNextCharacter = () => {
+    const nextIndex = (currentCharacterIndex + 1) % currentQuestion?.detailed_content?.length;
+    setCurrentCharacterIndex(nextIndex);
+    
+    // 다음 지문자 ID를 ML 서버로 전송
+    const idToSend = currentQuestion?.id[nextIndex];
+    if (idToSend) {
+      sendIdToMl(idToSend); // 선택한 지문자 ID를 ML 서버로 전송
+    }
   };
 
   return (
@@ -55,13 +80,30 @@ function StarquizDetail() {
           <p>{error}</p>
         ) : quizDetail ? (
           <>
-            <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
-              {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
-            </p>
-            {level === '1' && (
-              <p className="current-character" style={{ fontSize: '48px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
-                현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content?.[currentCharacterIndex] || "No Character Available"} {/* 지문자 표시 */}
+            {/* 레벨 3에서 지문자 없이 퀴즈 텍스트만 표시 */}
+            {level === '3' && (
+              <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
+                {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
               </p>
+            )}
+
+            {/* 레벨 1에서 지문자 표시 및 처리 */}
+            {level === '1' && (
+              <>
+                <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
+                  {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
+                </p>
+                <p className="current-character" style={{ fontSize: '48px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
+                  현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content?.[currentCharacterIndex] || "No Character Available"} {/* 지문자 표시 */}
+                </p>
+                {/* ML 서버 결과 표시 */}
+                {mlResult !== null && (
+                  <p style={{ fontSize: '24px', color: mlResult === 1 ? 'green' : 'red' }}>
+                    {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
+                  </p>
+                )}
+                <button onClick={handleNextCharacter}>다음 문자</button>
+              </>
             )}
           </>
         ) : (
@@ -74,7 +116,7 @@ function StarquizDetail() {
         <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
       </div>
     </Container>
-  );   
+  );
 }
 
 export default StarquizDetail;
