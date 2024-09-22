@@ -4,16 +4,35 @@ import Container from '../styles/Container';
 import { fetchLevel1Quiz, toggleFavorite } from '../api'; // API 호출 함수 추가
 import './GameLevel1.css';
 
+// 팝업 모달 컴포넌트
+function PopupModal({ message, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose(); // 일정 시간 후 자동으로 모달 닫기
+    }, 2000); // 2초 후 자동으로 닫힘
+    return () => clearTimeout(timer); // 컴포넌트가 언마운트되면 타이머 클리어
+  }, [onClose]);
+
+  return (
+    <div className="popup-modal">
+      <div className="modal-content">
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+}
+
 function GameLevel1() {
   const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
   const [isLoading, setIsLoading] = useState(true);
   const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0); // 지문자 인식 인덱스
+  const [quizId, setQuizId] = useState(null); // quiz_id 상태
+  const [mlIds, setMlIds] = useState([]); // ML 서버용 id 배열
+  const [popupMessage, setPopupMessage] = useState(''); // 팝업 메시지 상태
+  const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부 상태
+
   const navigate = useNavigate();
-  
-  // quiz_id와 id를 각각 상태로 저장
-  const [quizId, setQuizId] = useState(null);
-  const [mlIds, setMlIds] = useState([]);
 
   useEffect(() => {
     const randomQuizId = Math.floor(Math.random() * 30) + 1; // 1에서 30 사이의 랜덤 ID 생성
@@ -46,32 +65,35 @@ function GameLevel1() {
         console.error('퀴즈 ID가 설정되지 않았습니다.');
         return;
       }
-  
+
       const response = await toggleFavorite(quizId);
       if (response.success) {
-        setIsFavorite(!isFavorite);  // 즐겨찾기 상태 반전
-        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
+        const newFavoriteState = !isFavorite;  // 즐겨찾기 상태 반전
+        setIsFavorite(newFavoriteState);
+        console.log('즐겨찾기 클릭 후 상태:', newFavoriteState);
+
+        // 모달 메시지와 함께 팝업 표시
+        if (newFavoriteState) {
+          setPopupMessage('즐겨찾기에 등록되었습니다.');
+        } else {
+          setPopupMessage('즐겨찾기에서 해제되었습니다.');
+        }
+        setShowPopup(true); // 팝업 표시
       }
     } catch (error) {
       console.error('즐겨찾기 처리 중 오류:', error);
     }
   };
 
-  // 지문자 갱신 함수: 호출할 때마다 다음 지문자를 표시
-  const handleNextCharacter = () => {
-    setCurrentCharacterIndex((prevIndex) => 
-      (prevIndex + 1) % currentQuestion?.detailed_content.length
-    );
-  };
-
-  const handleGoBack = () => {
-    navigate(-1); // 이전 페이지로 이동
+  // 팝업 닫기 함수
+  const handleClosePopup = () => {
+    setShowPopup(false);
   };
 
   return (
     <Container className="game-level1-container">
       <div className="game-level1-left">
-        <button className="back-button" onClick={handleGoBack}>&larr;</button>
+        <button className="back-button" onClick={() => navigate(-1)}>&larr;</button>
         <div className="word-display">
           {isLoading ? (
             <span>Loading...</span>
@@ -99,6 +121,11 @@ function GameLevel1() {
           <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
         </div>
       </div>
+
+      {/* 팝업 모달 표시 */}
+      {showPopup && (
+        <PopupModal message={popupMessage} onClose={handleClosePopup} />
+      )}
     </Container>
   );
 }

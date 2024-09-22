@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import Modal from 'react-modal';
 import Container from '../styles/Container';
 import { fetchLevel2Quiz, handleQuizAnswer, toggleFavorite } from '../api'; 
@@ -10,14 +10,13 @@ Modal.setAppElement('#root');
 function GameLevel2() {
   const [currentImage, setCurrentImage] = useState(''); // 이미지 URL
   const [correctAnswer, setCorrectAnswer] = useState(''); // 정답
-  const [correctAnswerId, setCorrectAnswerId] = useState(null); // 정답 ID
+  const [quizId, setQuizId] = useState(null); // 퀴즈 ID
   const [options, setOptions] = useState([]); // 보기
   const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
   const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
   const [score, setScore] = useState(0); // 점수
   const [questionCount, setQuestionCount] = useState(0); // 문제 개수
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
-  const [quizId, setQuizId] = useState(null); // 퀴즈 ID 상태
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,7 +34,15 @@ function GameLevel2() {
         setCurrentImage(response.objectUrl); // 이미지 URL 설정
         setCorrectAnswer(response.correctAnswer); // 정답 설정
         setOptions(response.options); // 4지선다 보기 설정
-        setCorrectAnswerId(response.correctAnswerId); // 정답 ID 설정
+
+        // quiz_id가 설정되었는지 확인
+        if (response.quiz_id) {
+          setQuizId(response.quiz_id); // quiz_id가 설정된 경우 업데이트
+        } else {
+          console.error('퀴즈 ID가 설정되지 않았습니다.');
+          return;
+        }
+
         setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
@@ -63,21 +70,18 @@ function GameLevel2() {
     setModalIsOpen(true);
   };
 
-  // 즐겨찾기 버튼 클릭 시 정답 ID를 즐겨찾기로 넘기는 함수
+  // 즐겨찾기 버튼 클릭 시 quiz_id를 즐겨찾기로 넘기는 함수
   const handleFavoriteClick = async () => {
-    if (!correctAnswerId) {
-      console.error('정답 ID가 설정되지 않았습니다.');
-      return;
+    if (!quizId) {
+      console.error('퀴즈 ID가 설정되지 않았습니다.');
+      return; // quizId가 없는 경우 더 이상 처리하지 않음
     }
 
     try {
-      console.log("즐겨찾기에 사용할 정답 ID:", correctAnswerId);
-
-      // 정답 ID를 즐겨찾기 API로 전달
-      const response = await toggleFavorite(correctAnswerId); 
+      console.log("즐겨찾기에 사용할 퀴즈 ID:", quizId);
+      const response = await toggleFavorite(quizId); 
       if (response.success) {
         setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
-        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);

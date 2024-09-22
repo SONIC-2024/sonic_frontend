@@ -9,25 +9,14 @@ function GameLevel3() {
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
   const [isLoading, setIsLoading] = useState(true);
   const [renderFlag, setRenderFlag] = useState(false); // 강제로 리렌더링을 트리거하는 플래그
+  const [favoriteMessage, setFavoriteMessage] = useState(''); // 즐겨찾기 팝업 메시지
+  const [showFavoritePopup, setShowFavoritePopup] = useState(false); // 즐겨찾기 팝업 상태
   const navigate = useNavigate();
 
   useEffect(() => {
     const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
     loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
   }, []);
-
-  useEffect(() => {
-    console.log('즐겨찾기 상태 변경됨:', isFavorite);
-  }, [isFavorite]);
-
-  // renderFlag를 강제로 상태를 반전시켜서 리렌더링을 유도
-  useEffect(() => {
-    console.log('리렌더링 플래그:', renderFlag);
-  }, [renderFlag]);
-
-  useEffect(() => {
-    console.log('isFavorite 상태 변경:', isFavorite);
-  }, [isFavorite]);  
 
   const loadQuizData = async (quizId) => {
     try {
@@ -52,13 +41,28 @@ function GameLevel3() {
       console.log("즐겨찾기에 사용할 퀴즈 ID:", favoriteQuizId); // 현재 퀴즈 ID 확인
       const response = await toggleFavorite(favoriteQuizId); // 현재 퀴즈 ID로 즐겨찾기 요청
       if (response.success) {
-        setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
-        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
+        const newFavoriteState = !isFavorite;
+        setIsFavorite(newFavoriteState); // 즐겨찾기 상태 반전
+
+        // 즐겨찾기 팝업 메시지 설정
+        if (newFavoriteState) {
+          setFavoriteMessage('즐겨찾기에 등록되었습니다.');
+        } else {
+          setFavoriteMessage('즐겨찾기에서 해제되었습니다.');
+        }
+
+        // 팝업 상태를 true로 설정하여 팝업 표시
+        setShowFavoritePopup(true);
+        setTimeout(() => {
+          setShowFavoritePopup(false); // 2초 후 팝업 숨김
+        }, 2000);
+
+        console.log('즐겨찾기 클릭 후 상태:', newFavoriteState);
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
     }
-  };    
+  };
 
   const handleGoBack = () => {
     navigate(-1); // 이전 페이지로 이동
@@ -88,6 +92,13 @@ function GameLevel3() {
           <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
         </div>
       </div>
+
+      {/* 즐겨찾기 팝업 */}
+      {showFavoritePopup && (
+        <div className="favorite-popup">
+          <p>{favoriteMessage}</p>
+        </div>
+      )}
     </Container>
   );
 }
