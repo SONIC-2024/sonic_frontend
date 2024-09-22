@@ -24,25 +24,41 @@ function Starquiz() {
       } else if (level === 3) {
         response = await fetchFavoriteLevel3Quizzes();
       }
-      setFavoriteQuizzes(response.data.content); // 해당 레벨의 퀴즈 상태 저장
+  
+      console.log(`레벨 ${level}에 대한 응답:`, response.data); // 응답 데이터 로그 출력
+  
+      if (response && response.data && response.data.content.length > 0) {
+        setFavoriteQuizzes(response.data.content); // 데이터가 있을 경우에만 상태 저장
+      } else {
+        setFavoriteQuizzes([]); // 데이터가 없을 경우 빈 배열 저장
+      }
     } catch (error) {
-      console.error('즐겨찾기 퀴즈를 불러오는 중 오류:', error);
+      console.error(`레벨 ${level} 즐겨찾기 퀴즈를 불러오는 중 오류:`, error);
     } finally {
       setIsLoading(false); // 로딩 상태 종료
     }
-  };
+  };  
 
   const handleLevelChange = (level) => {
     setActiveLevel(level);
+    console.log(`현재 선택된 레벨: ${level}`); // 선택된 레벨 로그 출력
     loadFavoriteQuizzes(level); // 해당 레벨의 퀴즈를 불러옴
-  };
+  };  
 
   const handleQuizClick = (quizId) => {
     navigate(`/starquizdetail/${activeLevel}/${quizId}`); // 레벨과 퀴즈 ID를 함께 보냄
-  };  
+  };
+
+  // 뒤로가기 버튼 처리
+  const handleGoBack = () => {
+    navigate(-1); // 이전 페이지로 돌아가기
+  };
 
   return (
     <div className="starquiz-container">
+      <button className="back-button" onClick={handleGoBack}>
+        &larr;
+      </button>
       <h2>즐겨찾기한 퀴즈 목록</h2>
       <div className="level-buttons">
         <button
@@ -64,7 +80,7 @@ function Starquiz() {
           Level 3
         </button>
       </div>
-
+  
       {isLoading ? (
         <p className="loading-text">Loading...</p>
       ) : (

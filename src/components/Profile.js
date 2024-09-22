@@ -43,7 +43,7 @@ function Profile() {
           await reissueAccessToken();
           loadProfileData(); // 토큰 재발급 후 다시 시도
         } catch {
-          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
           handleLogout(); // 재발급 실패 시 로그아웃
         }
       } else if (status === 400) {
@@ -208,14 +208,18 @@ function Profile() {
     }
   };
 
+  const handleGoHome = () => {
+    navigate('/'); // 홈으로 이동
+  };
+
   const dayMap = {
-    '월': 'mon',
-    '화': 'tue',
-    '수': 'wed',
-    '목': 'thu',
-    '금': 'fri',
-    '토': 'sat',
-    '일': 'sun',
+    월: 'mon',
+    화: 'tue',
+    수: 'wed',
+    목: 'thu',
+    금: 'fri',
+    토: 'sat',
+    일: 'sun',
   };
 
   return (
@@ -226,12 +230,17 @@ function Profile() {
           <img src={profileImage} alt="Profile" className="profile-pic" />
           <div className="user-info">
             <h2>{newNickname || '사용자'}</h2>
-            <p className="status" onClick={handleLogout} style={{ cursor: 'pointer', color: 'blue' }}>로그아웃</p>
+            <p className="status" onClick={handleLogout} style={{ cursor: 'pointer', color: '#55679C' }}>
+              로그아웃
+            </p>
             <button className="edit-button" onClick={toggleEdit}>
               {isEditing ? '수정 완료' : '내 프로필 수정'}
             </button>
             <button className="edit-button" onClick={openRecoverPasswordModal}>
               비밀번호 찾기
+            </button>
+            <button className="edit-button" onClick={handleGoHome}>
+              HOME
             </button>
           </div>
         </div>
@@ -329,10 +338,10 @@ function Profile() {
             </div>
           </div>
           <div className="profile-card wide">
-        <button className="view-button" onClick={() => navigate('/starquiz')}>
-          퀴즈 즐겨찾기
-        </button>
-      </div>
+            <button className="view-button" onClick={() => navigate('/starquiz')}>
+              퀴즈 즐겨찾기
+            </button>
+          </div>
           <div className="profile-card wide">
             <h3>이번 주 출석</h3>
             <div className="attendance">
@@ -390,8 +399,8 @@ function Profile() {
         contentLabel="비밀번호 찾기"
       >
         <div className="modal-content">
-          <h2>비밀번호 찾기</h2>
-          <p>비밀번호를 재설정할 이메일을 입력하세요.</p>
+          <h3>비밀번호 찾기</h3>
+          <p>가입한 이메일을 입력하세요.</p>
           <input
             type="email"
             value={email}

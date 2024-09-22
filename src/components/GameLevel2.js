@@ -10,6 +10,7 @@ Modal.setAppElement('#root');
 function GameLevel2() {
   const [currentImage, setCurrentImage] = useState(''); // 이미지 URL
   const [correctAnswer, setCorrectAnswer] = useState(''); // 정답
+  const [correctAnswerId, setCorrectAnswerId] = useState(null); // 정답 ID
   const [options, setOptions] = useState([]); // 보기
   const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
   const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
@@ -32,6 +33,7 @@ function GameLevel2() {
         setCurrentImage(response.objectUrl); // 이미지 URL 설정
         setCorrectAnswer(response.correctAnswer); // 정답 설정
         setOptions(response.options); // 4지선다 보기 설정
+        setCorrectAnswerId(response.correctAnswerId); // 정답 ID 설정
         setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
@@ -39,7 +41,7 @@ function GameLevel2() {
     } catch (error) {
       console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
     }
-  };
+  };  
 
   const handleOptionClick = async (option) => {
     if (option === correctAnswer) {
@@ -59,11 +61,21 @@ function GameLevel2() {
     setModalIsOpen(true);
   };
 
+  // 즐겨찾기 버튼 클릭 시 정답 ID를 즐겨찾기로 넘기는 함수
   const handleFavoriteClick = async () => {
+    if (!correctAnswerId) {
+      console.error('정답 ID가 설정되지 않았습니다.');
+      return;
+    }
+
     try {
-      const response = await toggleFavorite(quizId); // 퀴즈 ID로 즐겨찾기 토글
+      console.log("즐겨찾기에 사용할 정답 ID:", correctAnswerId);
+
+      // 정답 ID를 즐겨찾기 API로 전달
+      const response = await toggleFavorite(correctAnswerId); 
       if (response.success) {
-        setIsFavorite(!isFavorite); // 즐겨찾기 상태 변경
+        setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
+        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);

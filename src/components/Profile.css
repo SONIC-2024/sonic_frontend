@@ -3,8 +3,8 @@
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: auto;
+  max-width: 900px;
+  margin: 40px auto;
   font-family: 'Arial', sans-serif;
 }
 
@@ -12,11 +12,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 35px;
 }
 
 .logo {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
   color: #4a4a4a;
 }
@@ -27,8 +27,8 @@
 }
 
 .profile-pic {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
   background-color: #d9d9d9;
@@ -37,45 +37,41 @@
 
 .user-info h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
   color: #4a4a4a;
 }
 
 .status {
-  font-size: 14px;
+  font-size: 16px;
   color: #a0a0a0;
-  margin-bottom: 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
 }
 
 .edit-button {
   background-color: #8294C4;
   border: none;
-  padding: 8px 12px;
+  padding: 4px 12px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 12px;
   color: #ffffff;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin-left: 10px;
-}
-
-.edit-button.small {
-  padding: 5px 12px;
-  font-size: 12px;
-  margin-left: 10px;
+  margin-left: 5px;
 }
 
 .edit-button:hover {
   background-color: #6f7da0;
 }
 
-.profile-content, .profile-edit-content {
+.profile-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-.profile-edit-card, .profile-card {
+.profile-card {
   background-color: #f5f5f5;
   border-radius: 12px;
   padding: 20px;
@@ -94,13 +90,13 @@
 
 .title-circle {
   background-color: #ffca28;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   color: #ffffff;
   font-weight: bold;
 }
@@ -112,7 +108,7 @@
 }
 
 .title-info span {
-  font-size: 14px;
+  font-size: 16px;
   color: #6d6d6d;
 }
 
@@ -124,13 +120,13 @@
 
 .total-problems p {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   color: #4a4a4a;
 }
 
 .level-stats p {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   color: #6d6d6d;
 }
 
@@ -169,8 +165,8 @@
 }
 
 .circle {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background-color: #c4c4c4;
   border-radius: 50%;
   margin-top: 5px;
@@ -181,97 +177,40 @@
 }
 
 .streak {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   color: #4a4a4a;
   text-align: right;
 }
 
-.profile-edit-card label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #6d6d6d;
-}
-
 .profile-edit-card input {
-  width: 90%;
-  padding: 8px;
+  width: 100%;
+  padding: 10px;
   border: 1px solid #c9c9c9;
   border-radius: 5px;
-  margin-top: 5px;
+  margin-bottom: 15px;
 }
 
-.password-change, .nickname-change {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  justify-content: space-between; /* 버튼과 인풋 필드를 더 잘 정렬하도록 조정 */
-}
-
-.password-change label, .nickname-change label {
-  flex: 1;
-  margin-right: 10px;
-}
-
-.password-change input, .nickname-change input {
-  flex: 2;
-}
-
-.password-change button, .nickname-change button {
-  margin-left: 10px;
-}
-
-.hand-change {
-  display: flex;
-  align-items: center;
-  gap: 1px; /* 버튼 간격을 줄였습니다 */
-  margin-top: 10px;
-}
-
-.withdrawal-button {
-  background-color: #e57373;
-  color: #ffffff;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.withdrawal-button:hover {
-  background-color: #d32f2f;
-}
-
-.delete-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  bottom: auto;
-  margin-right: -50%;
-  transform: translate(-50%, -50%);
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 10px;
-  width: 300px;
+.modal-content {
   text-align: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.overlay {
-  background-color: rgba(0, 0, 0, 0.75);
+  padding: 20px;
 }
 
 .modal-content h2 {
-  margin-bottom: 20px;
-  font-size: 18px;
+  margin-bottom: 16px;
+  font-size: 24px;
   color: #333;
+}
+
+.modal-content p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 24px;
 }
 
 .modal-input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin: 15px 0;
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -279,11 +218,13 @@
 
 .modal-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .modal-button {
-  background-color: #8294C4;
+  background-color: #6f7da0;
   color: #ffffff;
   border: none;
   padding: 10px 20px;
@@ -302,4 +243,53 @@
 
 .modal-button.cancel:hover {
   background-color: #d32f2f;
+}
+
+/* 손 방향 버튼 스타일 및 위치 조정 */
+.hand-change {
+  display: flex;
+  flex-direction: row; /* 버튼을 가로로 나열 */
+  gap: 10px; /* 버튼 간 간격 추가 */
+  align-items: center; /* 버튼들이 수직으로 가운데 정렬 */
+  margin-top: 10px; /* 위와의 간격 */
+}
+
+.hand-change button {
+  padding: 5px 10px; /* 버튼의 내부 여백을 줄여 크기를 작게 만듦 */
+  font-size: 12px; /* 글씨 크기를 줄여서 버튼 크기 조정 */
+  width: auto;
+  height: auto;
+}
+
+.withdrawal-button {
+  background-color: #e57373;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.withdrawal-button:hover {
+  background-color: #d32f2f;
+}
+
+.go-back-container {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.go-back-button {
+  background-color: transparent;
+  border: none;
+  font-size: 18px;
+  color: #8294C4;
+  cursor: pointer;
+}
+
+.go-back-button:hover {
+  color: #6f7da0;
 }

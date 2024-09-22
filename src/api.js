@@ -376,8 +376,12 @@ export const fetchUserName = async () => {
 // 랭킹 데이터 가져오기 API
 export const fetchRankingData = async () => {
   try {
-    const response = await apiClient.get('/ranking');
-    console.log('Ranking API Response:', response.data); // 응답 확인
+    const response = await apiClient.get('/ranking', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('accessToken')}`, // 토큰 추가
+      },
+    });
+    console.log('Ranking API Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('API Error:', error);
@@ -388,20 +392,12 @@ export const fetchRankingData = async () => {
 // 퀴즈 레벨1 불러오기 API
 export const fetchLevel1Quiz = async (quizId) => {
   try {
-    const url = `/quiz/level-1?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
-    console.log(`Fetching Level 1 Quiz from URL: ${url}`); // URL 로그 추가
-    
-    const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
-    console.log('API response:', response); // API 응답 로그 추가
+    console.log(`Fetching Level 1 quiz with quizId: ${quizId}`); // 로그 추가
+    const response = await apiClient.get(`/quiz/level-1?quiz-id=${quizId}`);
+    console.log('퀴즈 레벨1 데이터:', response.data); // 응답 데이터 출력
     return response.data;
   } catch (error) {
-    if (error.response) {
-      console.error("API request failed:", error.response.status, error.response.data);
-    } else if (error.request) {
-      console.error("No response received from API:", error.request);
-    } else {
-      console.error("Error setting up API request:", error.message);
-    }
+    console.error('퀴즈 레벨1 데이터를 불러오는 중 오류:', error);
     throw error;
   }
 };
@@ -412,6 +408,10 @@ export const fetchLevel2Quiz = async (quizId = 100) => {
     const url = `/quiz/level-2?quiz-id=${quizId}`; // quizId를 동적으로 경로에 넣음
     console.log(`Fetching Level 2 Quiz from URL: ${url}`); // URL 로그 추가
 
+    const shuffleArray = (array) => {
+      return array.sort(() => Math.random() - 0.5);
+    };    
+
     const response = await apiClient.get(url); // 동적으로 생성된 URL을 사용해 API 호출
 
     if (response && response.data) {
@@ -419,6 +419,7 @@ export const fetchLevel2Quiz = async (quizId = 100) => {
       console.log('퀴즈 데이터:', quizData); // 퀴즈 데이터 구조 확인
 
       const correctAnswer = quizData.answer;
+      const correctAnswerId = quizData.answerId; // 정답 ID 추가
 
       // `quizData.content`가 배열인지 확인하고 처리
       const contentArray = quizData.content;
@@ -434,6 +435,7 @@ export const fetchLevel2Quiz = async (quizId = 100) => {
         objectUrl: quizData.objectUrl, // 이미지 URL
         options, // 4지선다 보기
         correctAnswer, // 정답
+        correctAnswerId, // 정답 ID 추가
         isStarred: quizData.isStarred || false, // 즐겨찾기 여부
       };
     }
@@ -449,10 +451,6 @@ export const fetchLevel2Quiz = async (quizId = 100) => {
   }
 };
 
-const shuffleArray = (array) => {
-  return array.sort(() => Math.random() - 0.5);
-};
-
 // 퀴즈 레벨3 불러오기 API
 export const fetchLevel3Quiz = async (quizId = 200) => {
   try {
@@ -461,23 +459,6 @@ export const fetchLevel3Quiz = async (quizId = 200) => {
     return response.data;
   } catch (error) {
     console.error('퀴즈 레벨3 데이터를 불러오는 중 오류:', error);
-    throw error;
-  }
-};
-
-// 즐겨찾기 등록 및 취소 API
-export const toggleFavorite = async (quizId) => {
-  try {
-    // 문제 ID를 동적으로 경로에 추가
-    const response = await apiClient.post(`/quiz/star?quiz-id=${quizId}`);
-    console.log('즐겨찾기 응답:', response.data);
-    return response.data;
-  } catch (error) {
-    if (error.response) {
-      console.error('Error status:', error.response.status, 'data:', error.response.data);
-    } else {
-      console.error('Error:', error.message);
-    }
     throw error;
   }
 };
@@ -491,6 +472,22 @@ export const handleQuizAnswer = async (quizId, answer) => {
       answer,   // 정답도 본문에 포함
     });
     console.log('정답 처리 응답:', response.data);
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error('Error status:', error.response.status, 'data:', error.response.data);
+    } else {
+      console.error('Error:', error.message);
+    }
+    throw error;
+  }
+};
+
+// 즐겨찾기 등록 및 취소 API
+export const toggleFavorite = async (quizId) => {
+  try {
+    const response = await apiClient.post(`/quiz/star?quiz-id=${quizId}`);
+    console.log('즐겨찾기 응답:', response.data);
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -541,14 +538,16 @@ export const fetchFavoriteLevel3Quizzes = async (page = 0, size = 9, sort = 'id,
   }
 };
 
-export const fetchQuizDetail = async (quizId) => {
+// 레벨별 퀴즈 세부 정보 API 호출 함수
+export const fetchQuizDetail = async (level, quizId) => {
   try {
-    console.log(`Fetching quiz detail for quizId: ${quizId}`);  // quizId 로그 추가
-    const response = await apiClient.get(`/quiz/${quizId}`);  // API 호출
-    console.log('Response from server:', response);  // 서버 응답 로그
+    const response = await apiClient.get(`/quiz/level-${level}`, {
+      params: { 'quiz-id': quizId } // 쿼리 파라미터로 quiz-id 전달
+    });
+    console.log(`Fetching quiz detail for quizId: ${quizId} in level: ${level}`);
     return response.data;
   } catch (error) {
-    console.error('퀴즈 세부 정보를 가져오는 중 오류:', error);  // 오류 출력
+    console.error('퀴즈 정보를 불러오는 중 오류:', error);
     throw error;
   }
 };
@@ -560,5 +559,17 @@ const handleError = (error) => {
     console.error(`Error status: ${status}, data: ${JSON.stringify(data)}`);
   } else {
     console.error('Network error or no response:', error);
+  }
+};
+
+// ML 서버와의 핸드모션 인식 API 호출 함수
+export const recognizeHandMotion = async (mlIds) => {
+  try {
+    const response = await apiClient.post('/ml/recognize', { ids: mlIds });
+    console.log('ML Recognition Response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('ML 인식 중 오류 발생:', error);
+    throw error;
   }
 };

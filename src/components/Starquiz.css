@@ -1,7 +1,7 @@
 /* 전체 컨테이너 */
 .starquiz-container {
   padding: 40px;
-  background-color: #3F4E78;
+  background-color: #8294C4;
   min-height: 100vh;
   text-align: center;
   display: flex;
@@ -110,4 +110,15 @@
 .quiz-item span {
   font-weight: bold;
   color: #3F4E78;
+}
+
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
 }

@@ -45,22 +45,19 @@ function GameLevel3() {
   };
 
   const handleFavoriteClick = async () => {
-    if (!currentQuestion || !currentQuestion.id) {
-      console.error('퀴즈 ID가 설정되지 않았습니다.');
-      return;
-    }
-
+    const favoriteQuizId = 200;  // 즐겨찾기에 넘길 ID는 항상 200
+  
     try {
-      const response = await toggleFavorite(currentQuestion.id); // 즐겨찾기 토글
+      console.log("즐겨찾기에 사용할 퀴즈 ID:", favoriteQuizId); // 200을 출력하여 확인
+      const response = await toggleFavorite(favoriteQuizId); // 항상 200으로 즐겨찾기 요청
       if (response.success) {
-        setIsFavorite(!isFavorite); // 상태를 반전
-        console.log('즐겨찾기 클릭 후 상태:', !isFavorite); // 상태 확인
-        setRenderFlag(!renderFlag); // 리렌더링 트리거를 반전시켜 리렌더링 유도
+        setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
+        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
     }
-  };
+  };    
 
   const handleGoBack = () => {
     navigate(-1); // 이전 페이지로 이동

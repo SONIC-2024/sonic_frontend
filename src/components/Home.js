@@ -11,23 +11,22 @@ Modal.setAppElement('#root');
 function Home() {
   const [isLeftSectionOpen, setIsLeftSectionOpen] = useState(false);
   const [isRightSectionOpen, setIsRightSectionOpen] = useState(false);
-  const [isCenterSectionOpen, setIsCenterSectionOpen] = useState(false); // 사용자 이름 버튼 토글 상태 추가
+  const [isCenterSectionOpen, setIsCenterSectionOpen] = useState(false);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [userName, setUserName] = useState('');
-  const [rankingModalOpen, setRankingModalOpen] = useState(false);
-  const [isLoginMode, setIsLoginMode] = useState(true); // 일반 로그인 모드인지 확인
+  const [rankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태
+  const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 카카오 로그인 초기화
     if (window.Kakao && !window.Kakao.isInitialized()) {
       window.Kakao.init('470dc7bf73bd968fd704a3afec689397'); // REST API 키
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code'); // 카카오로부터 인가 코드를 받음
+    const code = urlParams.get('code');
     if (code) {
       handleLogin(code); // 인가 코드로 로그인 처리
     } else {
@@ -42,14 +41,14 @@ function Home() {
     try {
       const response = await fetchAccessToken(code);  // 인가 코드를 이용해 액세스 토큰 요청
       if (response && response.success) {
-        navigate('/');  // 성공하면 홈으로 리디렉션
+        navigate('/');
       } else {
         console.error('로그인 실패:', response?.message);
-        navigate('/');  // 실패 시 홈으로 리디렉션
+        navigate('/');
       }
     } catch (error) {
       console.error('로그인 처리 중 오류 발생:', error);
-      navigate('/');  // 오류 발생 시 홈으로 리디렉션
+      navigate('/');
     }
   };    
 
@@ -61,7 +60,7 @@ function Home() {
 
   const handleGeneralLogin = async () => {
     try {
-      const response = await loginUser(email, password); // 일반 로그인 처리
+      const response = await loginUser(email, password);
       if (response.success) {
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('refreshToken', response.data.refreshToken);
@@ -79,7 +78,7 @@ function Home() {
 
   const getUserName = async () => {
     try {
-      const response = await fetchUserName(); // 사용자 이름을 가져오는 API 호출
+      const response = await fetchUserName();
       if (response.success && response.data.authenticated) {
         setUserName(response.data.name);
       } else {
@@ -117,9 +116,9 @@ function Home() {
 
   const handleLetsGoClick = () => {
     if (!userName) {
-      setModalIsOpen(true); // 로그인 모달 열기
+      setModalIsOpen(true);
     } else {
-      handleCenterSectionToggle(); // 사용자 이름 버튼 클릭 시 토글
+      handleCenterSectionToggle();
     }
   };
 
@@ -170,8 +169,8 @@ function Home() {
       <div className="home-section center-section">
         {isCenterSectionOpen && userName && (
           <div className="toggle-content above">
-            <button className="modal-button" onClick={handleDashboardClick}>랭킹</button>
-            <button className="modal-button" onClick={handleProfileClick}>마이페이지</button>
+            <button className="home-ranking-button" onClick={handleDashboardClick}>랭킹</button>
+            <button className="home-profile-button" onClick={handleProfileClick}>마이페이지</button>
           </div>
         )}
         <button className="home-button center-button" onClick={handleLetsGoClick}>
@@ -213,7 +212,6 @@ function Home() {
             </>
           ) : (
             <>
-              {/* 회원가입 페이지로 이동 */}
               <button onClick={() => navigate('/register')} className="switch-button">회원가입 페이지로 이동</button>
               <button onClick={() => setIsLoginMode(true)} className="switch-button">로그인으로 이동</button>
             </>
@@ -230,8 +228,9 @@ function Home() {
         className="ranking-modal"
         overlayClassName="overlay"
       >
-        <div className="ranking-modal-content">
-          <Ranking toggleRankingModal={toggleRankingModal} />
+       <button onClick={toggleRankingModal} className="close-modal-button">×</button> {/* X 버튼으로 변경 */}
+         <div className="ranking-modal-content">
+         <Ranking isOpen={rankingModalOpen} toggleRankingModal={toggleRankingModal} />
         </div>
       </Modal>
     </Container>

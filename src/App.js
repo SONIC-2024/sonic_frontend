@@ -41,18 +41,12 @@ function App() {
           <Route path="/consonant-detail/:index" element={<ConsonantDetail />} />
           <Route path="/vowel-detail/:index" element={<VowelDetail />} />
           <Route path="/word-detail/:id" element={<WordDetail />} />
-          
-          {/* 추가된 경로 */}
           <Route path="/game-level1" element={<GameLevel1 />} />  {/* quizId 없이 기본 경로 */}
           <Route path="/game-level1/:quizId" element={<GameLevel1 />} />  {/* quizId에 따라 다르게 표시 */}
-          
-          {/* 레벨 2와 3에 대한 기본 경로 추가 */}
           <Route path="/game-level2" element={<GameLevel2 />} />  {/* quizId 없이 기본 경로 */}
           <Route path="/game-level2/:quizId" element={<GameLevel2 />} />  {/* quizId에 따라 다르게 표시 */}
-          
           <Route path="/game-level3" element={<GameLevel3 />} />  {/* quizId 없이 기본 경로 */}
           <Route path="/game-level3/:quizId" element={<GameLevel3 />} />  {/* quizId에 따라 다르게 표시 */}
-
           <Route path="/video-feed" element={<VideoFeed />} />
           <Route path="/oauth" element={<OAuthCallback />} />
           <Route path="/starquiz" element={<Starquiz />} />

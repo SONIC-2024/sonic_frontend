@@ -14,17 +14,25 @@ function Ranking({ isOpen, toggleRankingModal }) {
   useEffect(() => {
     if (isOpen) { // 모달이 열릴 때만 데이터를 로드
       const loadRankingData = async () => {
+        setLoading(true); // 로딩 상태를 시작
+        setError(null);   // 이전 에러 상태 초기화
         try {
           const data = await fetchRankingData();
-          if (data.success) {
-            setRankingData(data.data);
+          console.log('API 응답:', data); // API 응답 확인
+
+          // data.success가 있을 때와 없을 때를 모두 처리
+          if (data && data.success) {
+            setRankingData(data.data); // 랭킹 데이터를 상태에 저장
+          } else if (data.data) {
+            setRankingData(data.data); // 만약 success가 없으면 data로 처리
           } else {
-            setError('랭킹 데이터를 불러오는 중 오류가 발생했습니다.');
+            throw new Error('데이터 형식이 올바르지 않습니다.');
           }
         } catch (err) {
-          setError('랭킹 데이터를 불러오는 중 오류가 발생했습니다.');
+          setError('랭킹 데이터를 불러오는 중 오류가 발생했습니다.'); // 에러 상태 설정
+          console.error('API 호출 에러:', err); // 콘솔에 에러 출력
         } finally {
-          setLoading(false);
+          setLoading(false); // 로딩 상태 해제
         }
       };
 
@@ -53,7 +61,7 @@ function Ranking({ isOpen, toggleRankingModal }) {
             <ul className="ranking-list">
               {rankingData.map((user, index) => (
                 <li key={user.id} className="ranking-item">
-                  <div className="ranking-rank">#{user.ranking}</div>
+                  <div className="ranking-rank">#{user.ranking || index + 1}</div>
                   <img src={user.tierImg} alt="Tier" className="tier-image" />
                   <img src={user.profileImg} alt="Profile" className="profile-image" />
                   <div className="user-info">

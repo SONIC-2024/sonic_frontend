@@ -6,7 +6,5 @@ import App from './App';
 const rootElement = document.getElementById('root');
 const root = ReactDOM.createRoot(rootElement); // 변경: createRoot 사용
 root.render(
-  <React.StrictMode>
     <App />
-  </React.StrictMode>
 );

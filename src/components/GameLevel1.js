@@ -1,78 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Container from '../styles/Container';
-import { fetchLevel1Quiz, toggleFavorite } from '../api';
+import { fetchLevel1Quiz, toggleFavorite } from '../api'; // API 호출 함수 추가
 import './GameLevel1.css';
 
 function GameLevel1() {
-  const { quizId } = useParams(); // URL에서 quizId 가져옴
-  const [currentCharacter, setCurrentCharacter] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
+  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
   const [isLoading, setIsLoading] = useState(true);
+  const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0); // 지문자 인식 인덱스
   const navigate = useNavigate();
+  
+  // quiz_id와 id를 각각 상태로 저장
+  const [quizId, setQuizId] = useState(null);
+  const [mlIds, setMlIds] = useState([]);
 
   useEffect(() => {
-    if (quizId) {
-      console.log('quizId:', quizId); // quizId가 제대로 들어오는지 확인
-      loadQuizData(quizId); // quizId로 데이터 로딩
-    }
-  }, [quizId]);
+    const randomQuizId = Math.floor(Math.random() * 30) + 1; // 1에서 30 사이의 랜덤 ID 생성
+    loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
+  }, []);
 
   const loadQuizData = async (quizId) => {
     try {
-      setIsLoading(true);
-      console.log(`Fetching data for quizId: ${quizId}`); // quizId 로그 확인
-      const response = await fetchLevel1Quiz(quizId);
-      console.log('API 응답:', response); // API 응답 로그 추가
-      
-      if (response && response.success) {
-        console.log('퀴즈 데이터:', response.data.content); // 실제 데이터 확인
-        setCurrentCharacter(response.data.content);
-        setIsFavorite(response.data.isStarred || false);
+      const response = await fetchLevel1Quiz(quizId); // API 호출하여 데이터 가져오기
+      if (response.success) {
+        setCurrentQuestion(response.data); // 퀴즈 데이터 설정
+        setQuizId(response.data.quiz_id); // quiz_id 설정
+        setMlIds(response.data.id); // id 배열 설정 (ML 서버용)
+        setIsFavorite(response.data.starred || false); // 즐겨찾기 상태 설정
+        setIsLoading(false); // 로딩 상태 해제
+        setCurrentCharacterIndex(0); // 첫 번째 지문자 인식 인덱스 초기화
+        console.log("퀴즈 데이터 로드:", response.data);
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
       }
     } catch (error) {
-      console.error('오류 발생:', error.message);
-    } finally {
-      setIsLoading(false);
+      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
     }
   };
 
+  // 즐겨찾기 처리 함수: quiz_id를 사용
   const handleFavoriteClick = async () => {
     try {
-      await toggleFavorite(quizId);
-      setIsFavorite(!isFavorite);
+      if (!quizId) {
+        console.error('퀴즈 ID가 설정되지 않았습니다.');
+        return;
+      }
+  
+      const response = await toggleFavorite(quizId);
+      if (response.success) {
+        setIsFavorite(!isFavorite);  // 즐겨찾기 상태 반전
+        console.log('즐겨찾기 클릭 후 상태:', !isFavorite);
+      }
     } catch (error) {
       console.error('즐겨찾기 처리 중 오류:', error);
     }
   };
 
+  // 지문자 갱신 함수: 호출할 때마다 다음 지문자를 표시
+  const handleNextCharacter = () => {
+    setCurrentCharacterIndex((prevIndex) => 
+      (prevIndex + 1) % currentQuestion?.detailed_content.length
+    );
+  };
+
   const handleGoBack = () => {
-    navigate(-1);
+    navigate(-1); // 이전 페이지로 이동
   };
 
   return (
     <Container className="game-level1-container">
-      <button className="back-button" onClick={handleGoBack}>&larr;</button>
-      <button
-        className={`favorite-button ${isFavorite ? 'active' : ''}`}
-        onClick={handleFavoriteClick}
-      >
-        ★
-      </button>
       <div className="game-level1-left">
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : currentCharacter ? (
-          <p className="random-character">{currentCharacter}</p>
-        ) : (
-          <p>퀴즈 데이터를 불러올 수 없습니다.</p>
-        )}
+        <button className="back-button" onClick={handleGoBack}>&larr;</button>
+        <div className="word-display">
+          {isLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <div className="word-content">
+              <span className="word-item">{currentQuestion?.content}</span>
+              <div className="character-display">
+                <span className="current-character">
+                  현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content[currentCharacterIndex]}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div className="game-level1-right">
-        <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
+        <button 
+          className={`favorite-button ${isFavorite ? 'active' : ''}`} 
+          onClick={handleFavoriteClick}
+        >
+          ★
+        </button>
+        <div className="cam-placeholder">
+          <h2 className="video-title">Live Video Feed</h2>
+          <img src="http://localhost:5001/video_feed" alt="Live Video Feed" className="video-feed" />
+        </div>
       </div>
     </Container>
   );
