@@ -10,6 +10,7 @@ function GameLevel3() {
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteMessage, setFavoriteMessage] = useState(''); // 즐겨찾기 팝업 메시지
   const [showFavoritePopup, setShowFavoritePopup] = useState(false); // 즐겨찾기 팝업 상태
+  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,6 +31,32 @@ function GameLevel3() {
       }
     } catch (error) {
       console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
+    }
+  };
+
+  // ML 서버로 데이터 전송하는 함수
+  const sendToMLServer = async (quizId) => {
+    try {
+      const response = await fetch('http://localhost:5000/body_quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: quizId }), // 퀴즈 ID를 ML 서버로 전송
+      });
+
+      const result = await response.json();
+      console.log('ML 서버 응답:', result);  // ML 서버로부터 받은 응답 로그
+      setMlResult(result.result); // 0 또는 1의 결과 저장
+
+      // 결과에 따른 처리
+      if (result.result === 1) {
+        alert('정답입니다!');
+      } else {
+        alert('틀렸습니다!');
+      }
+    } catch (error) {
+      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
     }
   };
 
@@ -67,6 +94,12 @@ function GameLevel3() {
     navigate(-1); // 이전 페이지로 이동
   };
 
+  // ML 서버와 연동을 위한 버튼 추가
+  const handleSendToML = () => {
+    const quizIdToSend = currentQuestion?.quiz_id || 200;  // 현재 퀴즈의 ID 사용
+    sendToMLServer(quizIdToSend); // ML 서버로 퀴즈 ID 전송
+  };
+
   return (
     <Container className="game-level3-container">
       <div className="game-level3-left">
@@ -88,8 +121,11 @@ function GameLevel3() {
         </button>
         <div className="cam-placeholder">
           <h2 className="video-title">Live Video Feed</h2>
-          <img src="http://localhost:5000/video_feed" alt="Live Video Feed" className="video-feed" />
+          <img src="http://localhost:5000/video_feed_body" alt="Live Video Feed" className="video-feed" />
         </div>
+        <button onClick={handleSendToML} className="send-to-ml-button">
+          Send to ML Server
+        </button>
       </div>
 
       {/* 즐겨찾기 팝업 */}

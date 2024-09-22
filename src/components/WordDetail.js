@@ -46,7 +46,7 @@ function WordDetail() {
   // ML 서버로 단어 전송 및 결과 처리 함수
   const sendWordToMl = async (word) => {
     try {
-      const response = await fetch('http://localhost:5000/finger_quiz', {
+      const response = await fetch('http://localhost:5000/body_learn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

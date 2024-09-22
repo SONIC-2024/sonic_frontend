@@ -43,7 +43,7 @@ function VowelDetail() {
   // ML 서버로 모음 데이터를 전송하는 함수
   const sendVowelToMl = async (vowelId) => {
     try {
-      const response = await fetch('http://localhost:5000/finger_quiz', {
+      const response = await fetch('http://localhost:5000/finger_learn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ function VowelDetail() {
       </div>
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5000/video_feed" alt="Live Video Feed" className="video-feed" />
+        <img src="http://localhost:5000/video_feed_finger" alt="Live Video Feed" className="video-feed" />
       </div>
     </Container>
   );

@@ -19,7 +19,7 @@ function StarquizDetail() {
       try {
         const response = await fetchQuizDetail(level, quizId);
         console.log('API 응답:', response.data);  // 콘솔에 전체 API 응답 구조 확인
-        
+
         if (response.data.quiz_id <= 30 || level !== '1') {
           setQuizDetail(response.data);
           setCurrentQuestion(response.data);
@@ -36,15 +36,16 @@ function StarquizDetail() {
     loadQuizDetail();
   }, [level, quizId]);
 
-  // ML 서버로 지문자 ID 보내기 함수
+  // ML 서버로 데이터 전송 함수 (레벨에 따라 다르게 설정)
   const sendIdToMl = async (id) => {
+    const apiEndpoint = level === '1' ? 'finger_quiz' : 'body_quiz'; // 레벨에 따라 다른 엔드포인트 사용
     try {
-      const response = await fetch('http://localhost:5000/finger_quiz', {
+      const response = await fetch(`http://localhost:5000/${apiEndpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id }), // ML 서버로 지문자 ID 전송
+        body: JSON.stringify({ id }), // 레벨에 맞는 ID 전송
       });
 
       const result = await response.json();
@@ -62,7 +63,7 @@ function StarquizDetail() {
   const handleNextCharacter = () => {
     const nextIndex = (currentCharacterIndex + 1) % currentQuestion?.detailed_content?.length;
     setCurrentCharacterIndex(nextIndex);
-    
+
     // 다음 지문자 ID를 ML 서버로 전송
     const idToSend = currentQuestion?.id[nextIndex];
     if (idToSend) {
@@ -110,10 +111,10 @@ function StarquizDetail() {
           <p>퀴즈 정보를 불러올 수 없습니다.</p>
         )}
       </div>
-  
+
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5000/video_feed" alt="Live Video Feed" className="video-feed" />
+        <img src="http://localhost:5000/video_feed_body" alt="Live Video Feed" className="video-feed" />
       </div>
     </Container>
   );
