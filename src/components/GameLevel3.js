@@ -153,9 +153,6 @@ function GameLevel3() {
           <h2 className="video-title">Live Video Feed</h2>
           <img src="http://localhost:5000/video_feed_body" alt="Live Video Feed" className="video-feed" />
         </div>
-        <button onClick={handleSendToML} className="send-to-ml-button" disabled={isChecking}>
-          Send to ML Server
-        </button>
       </div>
 
       {/* 즐겨찾기 팝업 */}

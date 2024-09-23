@@ -4,6 +4,7 @@
   "proxy": "http://43.201.210.243:8080",
   "private": true,
   "dependencies": {
+    "@mediapipe/hands": "^0.4.1675469240",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -17,12 +18,12 @@
     "styled-components": "^6.1.11",
     "web-vitals": "^2.1.4"
   },
-"scripts": {
-  "start": "react-scripts --openssl-legacy-provider start",
-  "build": "react-scripts --openssl-legacy-provider build",
-  "test": "react-scripts test",
-  "eject": "react-scripts eject"
-},
+  "scripts": {
+    "start": "react-scripts --openssl-legacy-provider start",
+    "build": "react-scripts --openssl-legacy-provider build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

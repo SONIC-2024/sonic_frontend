@@ -95,9 +95,6 @@ function VowelDetail() {
           className="video-feed"
           mirrored={false}
         />
-        <button onClick={sendToMLServer}>
-          ML 서버로 전송
-        </button>
       </div>
 
       {mlResult && (

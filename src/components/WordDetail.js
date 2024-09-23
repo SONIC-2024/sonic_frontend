@@ -117,9 +117,6 @@ function WordDetail() {
             {/* 남은 시도 횟수 표시 */}
             <p>남은 시도 횟수: {attemptsLeft}</p>
             {/* 버튼으로 ML 체크 시작 */}
-            <button onClick={() => startCheckingMlResult(word)} disabled={isChecking}>
-              ML 결과 확인
-            </button>
           </>
         ) : (
           <p>단어 정보를 불러올 수 없습니다.</p>
