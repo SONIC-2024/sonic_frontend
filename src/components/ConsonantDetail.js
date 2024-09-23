@@ -12,6 +12,8 @@ function ConsonantDetail() {
   const [consonant, setConsonant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mlResult, setMlResult] = useState(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     if (index) {
@@ -32,6 +34,26 @@ function ConsonantDetail() {
       setError('자음 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendToMLServer = async () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      try {
+        const response = await fetch('http://localhost:5000/finger_learn', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: index }),  // 자음 ID를 ML 서버로 전송
+        });
+
+        const result = await response.json();
+        setMlResult(result.result === 1 ? '정답입니다!' : '오답입니다!');
+      } catch (error) {
+        setError('ML 서버와의 통신 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -74,7 +96,16 @@ function ConsonantDetail() {
           className="video-feed"
           mirrored={false}
         />
+        <button onClick={sendToMLServer} disabled={isChecking}>
+          ML 서버로 전송
+        </button>
       </div>
+
+      {mlResult && (
+        <div className="ml-result">
+          <p>{mlResult}</p>
+        </div>
+      )}
     </Container>
   );
 }

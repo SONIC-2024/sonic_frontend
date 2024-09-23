@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Webcam from 'react-webcam';
 import Container from '../styles/Container';
 import { fetchWordInfo } from '../api';  // 기존 API 호출 함수
 import './WordDetail.css';
@@ -7,6 +8,7 @@ import './WordDetail.css';
 function WordDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const webcamRef = useRef(null); // 웹캠 참조 추가
   const [word, setWord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,23 +48,26 @@ function WordDetail() {
     }
   };  
   
-  // ML 서버로 단어 전송 및 결과 처리 함수
+  // ML 서버로 단어와 웹캠 이미지를 전송하는 함수
   const sendWordToMl = async (word) => {
-    try {
-      const response = await fetch('http://localhost:5000/body_learn', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: word }),  // 단어 데이터를 ML 서버로 전송
-      });
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot(); // 웹캠 이미지 캡처
+      try {
+        const response = await fetch('http://localhost:5000/body_learn', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: word, image: imageSrc }),  // 단어와 이미지 전송
+        });
 
-      const result = await response.json();
-      console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
-      return result.result; // 결과 반환 (0 또는 1)
-    } catch (error) {
-      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
-      return null;
+        const result = await response.json();
+        console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
+        return result.result; // 결과 반환 (0 또는 1)
+      } catch (error) {
+        console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
+        return null;
+      }
     }
   };
 
@@ -111,6 +116,10 @@ function WordDetail() {
             )}
             {/* 남은 시도 횟수 표시 */}
             <p>남은 시도 횟수: {attemptsLeft}</p>
+            {/* 버튼으로 ML 체크 시작 */}
+            <button onClick={() => startCheckingMlResult(word)} disabled={isChecking}>
+              ML 결과 확인
+            </button>
           </>
         ) : (
           <p>단어 정보를 불러올 수 없습니다.</p>
@@ -119,7 +128,11 @@ function WordDetail() {
 
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5000/video_feed" alt="Live Video Feed" className="video-feed" />
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          className="video-feed"
+        />
       </div>
     </Container>
   );
