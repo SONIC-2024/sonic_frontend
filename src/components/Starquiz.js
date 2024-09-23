@@ -52,10 +52,10 @@ function Starquiz() {
     navigate(`/starquizdetail/${activeLevel}/${quizId}`); // 레벨과 퀴즈 ID를 함께 보냄
   };
 
-  // 뒤로가기 버튼 처리
-  const handleGoBack = () => {
-    navigate(-1); // 이전 페이지로 돌아가기
-  };
+// 뒤로가기 버튼 처리
+const handleGoBack = () => {
+  navigate('/profile'); // Profile 페이지로 돌아가기
+};
 
   return (
     <div className="starquiz-container">

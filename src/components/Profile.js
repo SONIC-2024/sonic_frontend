@@ -62,20 +62,21 @@ function Profile() {
     try {
       const tierData = await fetchTierInfo();
       setTierInfo(tierData.data);
-
+  
       const profileData = await fetchProfileInfo();
       setProfileImage(profileData.data.profileImg);
       setNewNickname(profileData.data.nickname);
-
+      setEmail(profileData.data.email);  // 이메일 설정
+  
       const attendanceData = await fetchAttendance();
       setAttendance(attendanceData.data);
-
+  
       const solvedQuizData = await fetchSolvedQuizNumbers();
       setSolvedQuizNumbers(solvedQuizData.data);
     } catch (error) {
       handleApiError(error);
     }
-  }, [handleApiError]);
+  }, [handleApiError]);  
 
   useEffect(() => {
     loadProfileData();
@@ -256,7 +257,7 @@ function Profile() {
           <div className="profile-edit-card">
             <label>
               이메일:
-              <input type="email" value="seoyeonsong@naver.com" readOnly />
+              <input type="email" value={email} readOnly />
             </label>
             <div className="password-change">
               <label>

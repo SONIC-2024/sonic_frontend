@@ -160,7 +160,7 @@ export const fetchCategoryList = async (category = 'w', page = 0, size = 9, sort
     console.log('API 응답 데이터:', response.data);
 
     // 성공 여부와 데이터를 확인하여 반환
-    if (response.data.success) {
+    if (response.data.success && Array.isArray(response.data.data.content)) {
       return response.data.data.content.map(item => ({
         id: item.id,
         title: item.title
@@ -174,7 +174,6 @@ export const fetchCategoryList = async (category = 'w', page = 0, size = 9, sort
     handleError(error);
   }
 };
-
 
 // 회원가입 API
 export const registerUser = async (email, password, nickname, hand, passwordCheck, emailCode) => {
