@@ -27,19 +27,14 @@ function WordDetail() {
       setLoading(true);
       const wordData = await fetchWordInfo(id);  // API 호출
       console.log('API 응답:', wordData);
+      console.log('wordData 내용:', wordData.data); // data 부분만 확인
   
       if (wordData && wordData.success && wordData.data.content.length > 0) {
-        // API 응답 데이터 구조에 따른 처리
-        const fetchedWord = wordData.data.content[0]; // content[0]이 예상 값인지 확인
-        console.log('단어 정보:', fetchedWord); 
-  
-        const wordContent = Array.isArray(fetchedWord) ? fetchedWord.join('') : fetchedWord;
-        setWord(wordContent); // 단어 상태 업데이트
-  
-        // 71-80 사이일 때만 ML 서버로 전송
-        if (parseInt(id, 10) >= 71 && parseInt(id, 10) <= 80) {
-          startCheckingMlResult(wordContent); // ML 서버에 단어 전송
-        }
+        const fetchedWord = wordData.data.content; // 단일 글자 대신 전체 content 사용
+        console.log('받은 단어 정보:', fetchedWord);
+        
+        // 전체 단어를 그대로 표시
+        setWord(fetchedWord);
       } else {
         setError('단어 정보를 찾을 수 없습니다.');
       }
@@ -50,7 +45,7 @@ function WordDetail() {
       setLoading(false);
     }
   };  
-
+  
   // ML 서버로 단어 전송 및 결과 처리 함수
   const sendWordToMl = async (word) => {
     try {

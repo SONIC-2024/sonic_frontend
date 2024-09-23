@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Webcam from 'react-webcam';
 import Container from '../styles/Container';
-import { fetchWordInfo } from '../api'; // 모음 세부 정보를 가져오는 API
+import { fetchWordInfo } from '../api';
 import './VowelDetail.css';
 
 function VowelDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
-  const [vowel, setVowel] = useState(null); // 모음 세부 정보 상태
+  const webcamRef = useRef(null);
+  const [vowel, setVowel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
-  const [repeatCount, setRepeatCount] = useState(0); // 반복 횟수
-  const [isRunning, setIsRunning] = useState(false); // 손 모양 확인 중인지 여부
 
   useEffect(() => {
     if (index) {
@@ -20,29 +19,12 @@ function VowelDetail() {
     }
   }, [index]);
 
-  useEffect(() => {
-    if (repeatCount > 0 && repeatCount <= 3) {
-      // 10초 동안 손 모양 확인 후 ML 서버로 데이터 전송
-      const timer = setTimeout(() => {
-        const vowelId = parseInt(index, 10);
-        if (vowelId >= 15 && vowelId <= 35) {
-          sendVowelToMl(vowelId);
-        }
-      }, 10000); // 10초 타이머
-
-      return () => clearTimeout(timer); // 컴포넌트 언마운트 시 타이머 정리
-    } else if (repeatCount > 3) {
-      resetVowel(); // 3번 반복 후 리셋
-    }
-  }, [repeatCount]);
-
   const loadVowelDetail = async () => {
     try {
       setLoading(true);
-      const vowelData = await fetchWordInfo(index); // 모음 세부 정보를 가져오는 API 호출
-      if (vowelData) {
-        setVowel(vowelData);
-        startVowelCheck(); // 모음 정보를 로드한 후 손 모양 확인 시작
+      const response = await fetchWordInfo(index);
+      if (response && response.success) {
+        setVowel(response.data);
       } else {
         setError('모음 정보를 찾을 수 없습니다.');
       }
@@ -53,82 +35,45 @@ function VowelDetail() {
     }
   };
 
-  // 손 모양 확인을 시작하는 함수
-  const startVowelCheck = () => {
-    setIsRunning(true); // 손 모양 확인 시작
-    setRepeatCount(1); // 첫 번째 시도
-  };
-
-  // ML 서버로 모음 데이터를 전송하는 함수
-  const sendVowelToMl = async (vowelId) => {
-    try {
-      const response = await fetch('http://localhost:5000/finger_learn', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: vowelId }),  // 모음 데이터를 ML 서버로 전송
-      });
-
-      const result = await response.json();
-      console.log('ML 서버 응답:', result);  // ML 서버로부터 받은 응답 로그
-      setMlResult(result.result); // 결과 저장 (0 또는 1)
-
-      // 다음 반복으로 이동
-      if (repeatCount < 3) {
-        setRepeatCount(repeatCount + 1); // 반복 횟수 증가
-      }
-    } catch (error) {
-      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
-    }
-  };
-
-  // 3번 시도 후 화면을 리셋하는 함수
-  const resetVowel = () => {
-    setRepeatCount(0); // 반복 횟수 초기화
-    setMlResult(null); // 결과 초기화
-    setIsRunning(false); // 손 모양 확인 종료
-    alert("손 모양 인식이 3회 종료되었습니다.");
-  };
-
   const handleGoBack = () => {
     navigate(-1);
   };
 
-  if (loading) {
-    return <div>로딩 중...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
-  }
-
   return (
     <Container className="vowel-detail-container">
-      <button className="back-button" onClick={handleGoBack}>&larr;</button>
+      <button className="back-button" onClick={handleGoBack}>
+        <span className="back-arrow">&larr;</span>
+      </button>
+
       <div className="detail-content">
         {vowel ? (
           <>
-            <img src={vowel.objectUrl} alt={`vowel${index}`} className="vowel-detail-image" />
-            <p className="vowel-character">{vowel.title}</p>
-
-            {/* ML 서버에서 받은 결과 표시 */}
-            {mlResult !== null && (
-              <p style={{ fontSize: '24px', color: mlResult === 1 ? 'green' : 'red' }}>
-                {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
-              </p>
-            )}
-
-            {/* 3번 시도 후 종료 메시지 */}
-            {repeatCount > 3 && <p style={{ fontSize: '18px', color: 'blue' }}>손 모양 인식이 종료되었습니다.</p>}
+            <div className="image-container">
+              <p className="vowel-character">{vowel.content}</p>
+              <img 
+                src={`/images/Vowel${index}.gif`} 
+                alt={`Vowel ${index} Large`} 
+                className="large-image" 
+              />
+              <img 
+                src={`/images/vowel${index}.png`} 
+                alt={`Vowel ${index} Small`} 
+                className="small-image" 
+              />
+            </div>
           </>
         ) : (
           <p>모음 정보를 불러올 수 없습니다.</p>
         )}
       </div>
+
       <div className="cam-placeholder">
-        <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5000/video_feed_finger" alt="Live Video Feed" className="video-feed" />
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          className="video-feed"
+          mirrored={false}
+        />
       </div>
     </Container>
   );

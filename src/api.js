@@ -74,9 +74,13 @@ export const fetchWordInfo = async (wordId) => {
   try {
     const response = await apiClient.get(`/word?word-id=${wordId}`);
     console.log('API response:', response.data); // 응답 데이터 확인
-    return response.data;
+    if (response.data && response.data.success) {
+      return response.data;
+    } else {
+      throw new Error('응답이 유효하지 않음');
+    }
   } catch (error) {
-    console.error('API 호출 중 오류:', error);
+    console.error('API 호출 중 오류:', error.response || error.message);
     handleError(error);
   }
 };
@@ -428,7 +432,12 @@ export const fetchLevel2Quiz = async (quizId = 100) => {
       }
 
       // 4지선다 문제 구성 (랜덤하게 보기 생성)
-      const options = shuffleArray([...contentArray, correctAnswer]).slice(0, 4); // 4개의 보기로 자르기
+      const uniqueOptions = Array.from(new Set([...contentArray, correctAnswer])); // 중복 제거
+      if (uniqueOptions.length < 4) {
+        throw new Error('보기 옵션의 개수가 부족합니다.');
+      }
+      
+      const options = shuffleArray(uniqueOptions).slice(0, 4); // 4개의 보기로 자르기
 
       return {
         objectUrl: quizData.objectUrl, // 이미지 URL

@@ -26,7 +26,8 @@ function PopupModal({ message, onClose }) {
 }
 
 function GameLevel2() {
-  const [currentImage, setCurrentImage] = useState(''); // 이미지 URL
+  const [currentImagePng, setCurrentImagePng] = useState(''); // PNG 이미지 URL
+  const [currentImageGif, setCurrentImageGif] = useState(''); // GIF 이미지 URL
   const [correctAnswer, setCorrectAnswer] = useState(''); // 정답
   const [quizId, setQuizId] = useState(null); // 퀴즈 ID
   const [options, setOptions] = useState([]); // 보기
@@ -45,23 +46,38 @@ function GameLevel2() {
     generateQuestion(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
   }, []);
 
+  // 정답 이미지 파일 로드 로직
+  const loadImages = (quizId) => {
+    const pngUrl = `/images/quiz_id@${quizId}.png`; // PNG 이미지 경로
+    const gifUrl = `/images/Quiz_id@${quizId}.gif`; // GIF 이미지 경로
+
+    // PNG 로드
+    const pngImage = new Image();
+    pngImage.src = pngUrl;
+    pngImage.onload = () => setCurrentImagePng(pngUrl);  // PNG가 로드되면 상태 설정
+    pngImage.onerror = () => setCurrentImagePng('');  // PNG가 없을 경우 빈 문자열 설정
+
+    // GIF 로드
+    const gifImage = new Image();
+    gifImage.src = gifUrl;
+    gifImage.onload = () => setCurrentImageGif(gifUrl);  // GIF가 로드되면 상태 설정
+    gifImage.onerror = () => setCurrentImageGif('');  // GIF가 없을 경우 빈 문자열 설정
+  };
+
+  // 문제 생성 함수
   const generateQuestion = async (quizId) => {
     try {
-      const response = await fetchLevel2Quiz(quizId); // API 호출
+      const response = await fetchLevel2Quiz(quizId); // 여기서 fetchLevel2Quiz만 호출하면 됩니다.
       console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
 
       if (response) {
-        setCurrentImage(response.objectUrl || 'default-image-url'); // 이미지 URL 설정
         setCorrectAnswer(response.correctAnswer); // 정답 설정
         setQuizId(response.quiz_id || quizId); // quiz_id가 있으면 설정, 없으면 기존 quizId 유지
         setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
+        setOptions([...response.options]); // 보기 설정
 
-        // 보기 생성: 정답과 랜덤한 오답 포함, 중복 제거
-        const allOptions = [...response.options];
-        const uniqueOptions = Array.from(new Set(allOptions)); // 중복 제거
-        const limitedOptions = uniqueOptions.slice(0, 3); // 3개의 오답 선택
-        const finalOptions = [...limitedOptions, response.correctAnswer]; // 정답 추가
-        setOptions(shuffleArray(finalOptions)); // 배열을 섞어서 설정
+        // 이미지 로드 함수 호출
+        loadImages(quizId);
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
       }
@@ -70,11 +86,7 @@ function GameLevel2() {
     }
   };
 
-  // 배열을 랜덤하게 섞는 함수
-  const shuffleArray = (array) => {
-    return array.sort(() => Math.random() - 0.5);
-  };
-
+  // 4지선다 문제를 렌더링하는 부분
   const handleOptionClick = async (option) => {
     if (option === correctAnswer) {
       setIsCorrect(true);
@@ -132,8 +144,11 @@ function GameLevel2() {
     <Container className="game-level2-container">
       <div className="game-level2-left">
         <button className="back-button" onClick={handleGoBack}>&larr;</button>
-        {currentImage && (
-          <img src={currentImage} alt="Character" className="character-image" />
+        {currentImagePng && (
+          <img src={currentImagePng} alt="PNG Character" className="character-image" />
+        )}
+        {currentImageGif && (
+          <img src={currentImageGif} alt="GIF Character" className="character-image" />
         )}
       </div>
       <div className="game-level2-right">

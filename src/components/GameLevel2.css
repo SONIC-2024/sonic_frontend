@@ -155,29 +155,30 @@
 .next-button:hover {
   background-color: #45a049;
 }
-
-/* 즐겨찾기 모달 스타일 */
-.favorite-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #FFEAD2;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  width: 250px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.favorite-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
+/* PopupModal에 적용할 스타일 */
+.popup-modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%; /* 수직 중앙 */
+  left: 50%; /* 수평 중앙 */
+  transform: translate(-50%, -50%); /* 정확히 중앙으로 이동 */
+  background-color: rgba(255, 255, 255, 0.95); /* 약간 투명한 흰색 배경 */
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* 최상위에 표시 */
+  max-width: 300px;
+  text-align: center;
+  font-size: 16px;
+  color: #333;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
+
+.popup-modal.hide {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+

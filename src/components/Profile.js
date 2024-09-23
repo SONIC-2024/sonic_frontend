@@ -257,7 +257,9 @@ function Profile() {
           <div className="profile-edit-card">
             <label>
               이메일:
-              <input type="email" value={email} readOnly />
+              <input type="email" 
+              placeholder="sbssys55@sookmyung.ac.kr"
+              value={email} readOnly />
             </label>
             <div className="password-change">
               <label>
@@ -362,34 +364,35 @@ function Profile() {
         </div>
       )}
 
-      {/* 탈퇴 확인 모달 */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onRequestClose={closeDeleteModal}
-        className="delete-modal"
-        overlayClassName="overlay"
-        contentLabel="회원 탈퇴 확인"
-      >
-        <div className="modal-content">
-          <h2>회원 탈퇴</h2>
-          <p>탈퇴하시려면 비밀번호를 입력하세요.</p>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호"
-            className="modal-input"
-          />
-          <div className="modal-buttons">
-            <button onClick={handleDeleteAccountClick} className="modal-button">
-              확인
-            </button>
-            <button onClick={closeDeleteModal} className="modal-button cancel">
-              취소
-            </button>
-          </div>
-        </div>
-      </Modal>
+{/* 탈퇴 확인 모달 */}
+<Modal
+  isOpen={isDeleteModalOpen}
+  onRequestClose={closeDeleteModal}
+  className="delete-modal"
+  overlayClassName="overlay"
+  contentLabel="회원 탈퇴 확인"
+>
+  <div className="modal-content">
+    <h2>회원 탈퇴</h2>
+    <p>탈퇴하시려면 비밀번호를 입력하세요.</p>
+    <input
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      placeholder="비밀번호를 입력하세요"
+      className="modal-input"
+    />
+    <div className="modal-buttons">
+      <button onClick={handleDeleteAccountClick} className="modal-button">
+        확인
+      </button>
+      <button onClick={closeDeleteModal} className="modal-button cancel">
+        취소
+      </button>
+    </div>
+  </div>
+</Modal>
+
 
       {/* 비밀번호 찾기 모달 */}
       <Modal

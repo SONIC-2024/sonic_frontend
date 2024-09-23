@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, recoverPassword } from '../api'; // API 함수들 가져오기
@@ -12,6 +12,14 @@ function Login() {
   const [isRecoverPasswordModalOpen, setIsRecoverPasswordModalOpen] = useState(false); // 비밀번호 찾기 모달 상태
   const [recoverEmail, setRecoverEmail] = useState(''); // 비밀번호 찾기용 이메일 상태
   const navigate = useNavigate();
+
+  // 사용자가 저장한 이메일을 가져와서 기본값으로 설정
+  useEffect(() => {
+    const storedEmail = localStorage.getItem('userEmail'); // 로컬 스토리지에서 이메일을 가져옴
+    if (storedEmail) {
+      setEmail(storedEmail); // 이메일 상태에 저장
+    }
+  }, []);
 
   const handleLogin = async () => {
     try {

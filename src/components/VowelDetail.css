@@ -1,7 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 스크롤바 없애기 */
+  overflow: hidden;
   height: 100%; /* 전체 높이를 100%로 설정 */
 }
 
@@ -9,7 +9,7 @@ html, body {
   display: flex;
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* 스크롤바가 나오지 않도록 설정 */
+  overflow: hidden;
 }
 
 .detail-content {
@@ -18,7 +18,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #DBDFEA;
+  background-color: #FFFFFF; /* 왼쪽 절반 배경을 흰색으로 설정 */
   position: relative;
 }
 
@@ -32,38 +32,46 @@ html, body {
   cursor: pointer;
 }
 
-.vowel-detail-image {
-  max-width: 80%;
-  max-height: 80%;
+.image-container {
+  position: relative;
+  width: 100%; /* 큰 이미지 컨테이너의 크기를 설정 */
+  max-width: 2000px; /* 최대 너비 설정 */
+}
+
+.small-image {
+  position: absolute;
+  top: -100px; /* 상단으로 위치 조정 */
+  right: 10px; /* 오른쪽 상단에 고정 */
+  width: 25%; /* 작은 이미지 크기 */
+  height: auto;
 }
 
 .vowel-character {
   font-size: 48px;
-  margin-top: 20px;
+  position: absolute;
+  top: 10px; /* 자음을 상단 중앙에 배치 */
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+}
+
+.large-image {
+  width: 100%; /* 큰 이미지를 컨테이너 크기에 맞게 조정 */
+  height: auto;
+  margin-top: 60px; /* 이미지와 자음 간격 추가 */
 }
 
 .cam-placeholder {
   flex: 1;
+  background-color: #55679C; /* 오른쪽 절반 배경을 파란색으로 설정 */
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #55679C; /* 파란색 배경 */
-  font-size: 48px;
-  color: #FFF;
-  width: 100%;
-  height: 100%;
-}
-
-.video-title {
-  margin-bottom: 20px;
-  font-size: 32px;
-  color: #FFF;
 }
 
 .video-feed {
-  max-width: 90%; /* 비디오 크기를 조절하여 뷰포트를 넘지 않도록 설정 */
-  max-height: 80%; /* 비디오 크기 조절 */
-  border-radius: 10px;
+  width: 100%; /* 비디오를 오른쪽 절반에 꽉 차게 */
+  height: 100%; /* 세로로도 꽉 차게 */
+  border-radius: 0;
   background-color: #FFF; /* 비디오 주위에 흰색 배경 추가 */
 }

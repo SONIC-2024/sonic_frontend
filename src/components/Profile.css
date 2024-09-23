@@ -191,13 +191,35 @@
   margin-bottom: 15px;
 }
 
+/* 기존 모달 스타일 수정 */
 .modal-content {
   text-align: center;
   padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: auto;
+  position: relative;  /* 추가 */
+  top: 50px;           /* 추가: 이 값을 조정하여 모달의 수직 위치를 조정 */
+}
+
+.overlay {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;  /* 가운데에서 약간 아래로 배치 */
+  padding-top: 100px;       /* 추가: 이 값을 조정하여 창이 아래로 내려가도록 설정 */
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
 }
 
 .modal-content h2 {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-size: 24px;
   color: #333;
 }
@@ -205,40 +227,42 @@
 .modal-content p {
   font-size: 16px;
   color: #666;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .modal-input {
   width: 100%;
   padding: 12px;
-  margin: 15px 0;
+  font-size: 16px;
+  margin-bottom: 20px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .modal-buttons {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
+  gap: 20px;
 }
 
 .modal-button {
   background-color: #6f7da0;
-  color: #ffffff;
-  border: none;
+  color: #fff;
   padding: 10px 20px;
   border-radius: 5px;
+  font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  border: none;
+}
+
+.modal-button:hover {
+  background-color: #5a6c8a;
 }
 
 .modal-button.cancel {
   background-color: #e57373;
-}
-
-.modal-button:hover {
-  background-color: #6f7da0;
 }
 
 .modal-button.cancel:hover {
