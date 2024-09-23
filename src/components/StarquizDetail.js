@@ -68,6 +68,8 @@ function StarquizDetail() {
     const idToSend = currentQuestion?.id[nextIndex];
     if (idToSend) {
       sendIdToMl(idToSend); // 선택한 지문자 ID를 ML 서버로 전송
+    } else {
+      console.error('전송할 ID가 없습니다.');
     }
   };
 

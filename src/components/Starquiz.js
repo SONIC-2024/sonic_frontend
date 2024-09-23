@@ -39,9 +39,12 @@ function Starquiz() {
     }
   };  
 
+  useEffect(() => {
+    loadFavoriteQuizzes(activeLevel); // 초기 레벨 1 퀴즈 로드
+  }, [activeLevel]);
+
   const handleLevelChange = (level) => {
     setActiveLevel(level);
-    console.log(`현재 선택된 레벨: ${level}`); // 선택된 레벨 로그 출력
     loadFavoriteQuizzes(level); // 해당 레벨의 퀴즈를 불러옴
   };  
 
@@ -88,7 +91,7 @@ function Starquiz() {
           {favoriteQuizzes.length > 0 ? (
             favoriteQuizzes.map((quiz) => (
               <li key={quiz.id} className="quiz-item" onClick={() => handleQuizClick(quiz.id)}>
-                {quiz.title}
+                {quiz.title || 'No Title Available'}
               </li>
             ))
           ) : (

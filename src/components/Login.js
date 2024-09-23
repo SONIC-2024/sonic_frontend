@@ -30,10 +30,10 @@ function Login() {
   };
 
   const handleKakaoLogin = () => {
-    const clientId = '8e3643a2c6410ddcc34494402ba6293d';
-    const redirectUri = 'http://43.201.210.243:8080/auth/sign-in/kakao';
+    const clientId = '8e3643a2c6410ddcc34494402ba6293d';  // 카카오 클라이언트 ID
+    const redirectUri = 'http://localhost:3000/oauth';  // 로컬 리디렉트 URI로 수정
     window.location.href = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
-  };
+  };  
 
   const openRecoverPasswordModal = () => {
     setIsRecoverPasswordModalOpen(true);

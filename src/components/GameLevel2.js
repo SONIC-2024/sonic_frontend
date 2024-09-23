@@ -2,10 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from 'react-modal';
 import Container from '../styles/Container';
-import { fetchLevel2Quiz, handleQuizAnswer, toggleFavorite } from '../api'; 
+import { fetchLevel2Quiz, handleQuizAnswer, toggleFavorite } from '../api';
 import './GameLevel2.css';
 
 Modal.setAppElement('#root');
+
+// PopupModal 컴포넌트 추가
+function PopupModal({ message, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose(); // 일정 시간 후 자동으로 모달 닫기
+    }, 2000); // 2초 후 자동으로 닫힘
+    return () => clearTimeout(timer); // 컴포넌트가 언마운트되면 타이머 클리어
+  }, [onClose]);
+
+  return (
+    <div className="popup-modal">
+      <div className="modal-content">
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+}
 
 function GameLevel2() {
   const [currentImage, setCurrentImage] = useState(''); // 이미지 URL
@@ -17,6 +35,8 @@ function GameLevel2() {
   const [score, setScore] = useState(0); // 점수
   const [questionCount, setQuestionCount] = useState(0); // 문제 개수
   const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
+  const [popupMessage, setPopupMessage] = useState(''); // 팝업 메시지
+  const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,37 +49,38 @@ function GameLevel2() {
     try {
       const response = await fetchLevel2Quiz(quizId); // API 호출
       console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
-  
+
       if (response) {
-        setCurrentImage(response.objectUrl); // 이미지 URL 설정
+        setCurrentImage(response.objectUrl || 'default-image-url'); // 이미지 URL 설정
         setCorrectAnswer(response.correctAnswer); // 정답 설정
-        setOptions(response.options); // 4지선다 보기 설정
-
-        // quiz_id가 설정되었는지 확인
-        if (response.quiz_id) {
-          setQuizId(response.quiz_id); // quiz_id가 설정된 경우 업데이트
-        } else {
-          console.error('퀴즈 ID가 설정되지 않았습니다.');
-          return;
-        }
-
+        setQuizId(response.quiz_id || quizId); // quiz_id가 있으면 설정, 없으면 기존 quizId 유지
         setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
+
+        // 보기 생성: 정답과 랜덤한 오답 포함, 중복 제거
+        const allOptions = [...response.options];
+        const uniqueOptions = Array.from(new Set(allOptions)); // 중복 제거
+        const limitedOptions = uniqueOptions.slice(0, 3); // 3개의 오답 선택
+        const finalOptions = [...limitedOptions, response.correctAnswer]; // 정답 추가
+        setOptions(shuffleArray(finalOptions)); // 배열을 섞어서 설정
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
       }
     } catch (error) {
       console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
     }
-  };  
+  };
+
+  // 배열을 랜덤하게 섞는 함수
+  const shuffleArray = (array) => {
+    return array.sort(() => Math.random() - 0.5);
+  };
 
   const handleOptionClick = async (option) => {
     if (option === correctAnswer) {
       setIsCorrect(true);
       setScore(score + 1);
       try {
-        console.log('Sending quizId:', quizId, 'and correctAnswer:', correctAnswer); // 로그 추가
-        // quizId와 correctAnswer를 함께 전달
-        await handleQuizAnswer(quizId, correctAnswer); 
+        await handleQuizAnswer(quizId, correctAnswer); // quizId와 정답을 함께 전달
       } catch (error) {
         console.error('퀴즈 정답 처리 중 오류 발생:', error);
       }
@@ -70,7 +91,6 @@ function GameLevel2() {
     setModalIsOpen(true);
   };
 
-  // 즐겨찾기 버튼 클릭 시 quiz_id를 즐겨찾기로 넘기는 함수
   const handleFavoriteClick = async () => {
     if (!quizId) {
       console.error('퀴즈 ID가 설정되지 않았습니다.');
@@ -78,10 +98,15 @@ function GameLevel2() {
     }
 
     try {
-      console.log("즐겨찾기에 사용할 퀴즈 ID:", quizId);
       const response = await toggleFavorite(quizId); 
       if (response.success) {
         setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
+
+        // 팝업 메시지 설정
+        const message = isFavorite ? '즐겨찾기에서 해제되었습니다.' : '즐겨찾기에 등록되었습니다.';
+        setPopupMessage(message);  // 팝업 메시지 업데이트
+        setShowPopup(true);  // 팝업 표시
+        setTimeout(() => setShowPopup(false), 2000);  // 2초 후 팝업 숨기기
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
@@ -144,6 +169,11 @@ function GameLevel2() {
           <button onClick={handleCloseModal} className="next-button">다음</button>
         </div>
       </Modal>
+
+      {/* 팝업 모달 표시 */}
+      {showPopup && (
+        <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />
+      )}
     </Container>
   );
 }
