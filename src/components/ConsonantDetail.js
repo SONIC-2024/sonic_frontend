@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import Container from '../styles/Container';
-import { fetchWordInfo } from '../api'; 
+import { fetchWordInfo } from '../api';
 import './ConsonantDetail.css';
-import { Hands } from '@mediapipe/hands';
+import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델
+import '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-converter';
 
 function ConsonantDetail() {
   const { index } = useParams();
@@ -13,13 +15,12 @@ function ConsonantDetail() {
   const [consonant, setConsonant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mlResult, setMlResult] = useState(null);
-  const [hands, setHands] = useState(null);
 
   useEffect(() => {
     if (index) {
       loadConsonantDetail();
     }
-    initializeMediaPipe();
+    initializeHandpose();
   }, [index]);
 
   const loadConsonantDetail = async () => {
@@ -36,62 +37,40 @@ function ConsonantDetail() {
     }
   };
 
-  const initializeMediaPipe = () => {
-    const handsModule = new Hands({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-    });
+  const initializeHandpose = async () => {
+    try {
+      const net = await handpose.load(); // handpose 모델 로드
+      console.log("Handpose model loaded.");
 
-    handsModule.setOptions({
-      maxNumHands: 1,  // 한 손만 인식
-      modelComplexity: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
-    });
+      const detect = async () => {
+        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+          const video = webcamRef.current.video;
 
-    handsModule.onResults((results) => {
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        setHands(results.multiHandLandmarks[0]);
-        sendToMLServer(results.multiHandLandmarks[0]); // 손 관절 데이터를 서버로 전송
-      } else {
-        setHands(null);
-      }
-    });
-
-    const startCamera = async () => {
-      if (webcamRef.current) {
-        const video = webcamRef.current.video;
-        if (video.readyState === 4) {
-          handsModule.send({ image: video });
-          requestAnimationFrame(startCamera);  // 지속적으로 프레임마다 인식 요청
+          const predictions = await net.estimateHands(video); // 손 관절 예측
+          if (predictions.length > 0) {
+            sendToMLServer(predictions[0].landmarks); // 연속적인 손 관절 데이터 전송
+          }
         }
-      }
-    };
+        requestAnimationFrame(detect); // 매 프레임마다 호출
+      };
 
-    const intervalId = setInterval(() => {
-      if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-        handsModule.send({ image: webcamRef.current.video });
-      }
-    }, 100); // 매 100ms마다 손 관절 분석
-
-    return () => clearInterval(intervalId); // 컴포넌트가 언마운트되면 정리
+      detect();
+    } catch (error) {
+      console.error("Handpose 모델 초기화 중 오류 발생:", error);
+    }
   };
 
   const sendToMLServer = async (landmarks) => {
     try {
-      const response = await fetch('http://localhost:5000/finger_learn', {
+      await fetch('http://localhost:5000/finger_learn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 전송
+        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 연속적으로 전송
       });
-
-      const result = await response.json();
-      setMlResult(result.result === 1 ? '정답입니다!' : '오답입니다!');
     } catch (error) {
-      console.log('ML 서버와의 통신 오류가 발생했습니다.');
-      // 화면에 오류 메시지를 보여주지 않고 콘솔에만 출력하도록 수정
+      console.error('ML 서버와의 통신 오류가 발생했습니다.', error); // 오류 디버깅용 메시지
     }
   };
 
