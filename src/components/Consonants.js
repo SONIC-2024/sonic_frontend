@@ -17,13 +17,17 @@ function Consonants() {
     try {
       setLoading(true);
       const data = await fetchCategoryList('c', 0, 14); // 'c' 카테고리를 통해 자음 목록을 한 번에 모두 불러옴
-      setConsonants(data);
+      if (data && data.length > 0) {
+        setConsonants(data); // 데이터가 존재하면 상태에 저장
+      } else {
+        setError('자음 데이터를 찾을 수 없습니다.'); // 데이터가 없을 경우 에러 처리
+      }
     } catch (error) {
-      setError('자음 목록을 불러오는 중 오류가 발생했습니다.');
+      setError('자음 목록을 불러오는 중 오류가 발생했습니다.'); // API 호출 실패 시 에러 처리
     } finally {
-      setLoading(false);
+      setLoading(false); // 로딩 상태 해제
     }
-  };
+  };  
 
   useEffect(() => {
     loadConsonants(); // 컴포넌트가 마운트될 때 자음 목록을 불러옴

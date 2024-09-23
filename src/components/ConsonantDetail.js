@@ -39,7 +39,7 @@ function ConsonantDetail() {
 
   const sendToMLServer = async () => {
     if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
+      const imageSrc = webcamRef.current.getScreenshot(); // 웹캠 이미지 캡처
       try {
         const response = await fetch('http://localhost:5000/finger_learn', {
           method: 'POST',
@@ -48,14 +48,14 @@ function ConsonantDetail() {
           },
           body: JSON.stringify({ id: index }),  // 자음 ID를 ML 서버로 전송
         });
-
+  
         const result = await response.json();
         setMlResult(result.result === 1 ? '정답입니다!' : '오답입니다!');
       } catch (error) {
         setError('ML 서버와의 통신 오류가 발생했습니다.');
       }
     }
-  };
+  };  
 
   const handleGoBack = () => {
     navigate(-1);
@@ -71,18 +71,21 @@ function ConsonantDetail() {
         {consonant ? (
           <>
             <div className="image-container">
-              <p className="consonant-character">{consonant.content}</p>
-              <img 
-                src={`/images/Consonant${index}.gif`} 
-                alt={`Consonant ${index} Large`} 
-                className="large-image" 
-              />
-              <img 
-                src={`/images/consonant${index}.png`} 
-                alt={`Consonant ${index} Small`} 
-                className="small-image" 
-              />
-            </div>
+  <p className="consonant-character">{consonant.content}</p>
+  {/* 자음에 해당하는 이미지가 있는지 먼저 확인 후 출력 */}
+  <img 
+    src={`/images/Consonant${index}.gif`} 
+    alt={`Consonant ${index} Large`} 
+    className="large-image" 
+    onError={(e) => { e.target.src = '/images/default.gif'; }} // 에러 발생 시 기본 이미지 표시
+  />
+  <img 
+    src={`/images/consonant${index}.png`} 
+    alt={`Consonant ${index} Small`} 
+    className="small-image" 
+    onError={(e) => { e.target.src = '/images/default.png'; }} // 에러 발생 시 기본 이미지 표시
+  />
+</div>
           </>
         ) : (
           <p>자음 정보를 불러올 수 없습니다.</p>
