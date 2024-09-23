@@ -51,6 +51,7 @@ function GameLevel1() {
         setIsLoading(false); // 로딩 상태 해제
         setCurrentCharacterIndex(0); // 첫 번째 지문자 인식 인덱스 초기화
         console.log("퀴즈 데이터 로드:", response.data);
+        handleNextCharacter(); // 첫 번째 지문자 바로 처리 시작
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
       }
@@ -73,25 +74,31 @@ function GameLevel1() {
       const result = await response.json();
       console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
       setMlResult(result.result); // 0 또는 1의 결과 저장
+
+      // 정답일 경우 다음 지문자로 이동
+      if (result.result === 1) {
+        setCurrentCharacterIndex((prevIndex) => (prevIndex + 1) % mlIds.length); // 다음 지문자로 이동
+      } else {
+        console.log('오답입니다. 다시 시도하세요.');
+      }
+
+      // 자동으로 다음 문자 처리
+      setTimeout(() => {
+        handleNextCharacter(); // 다음 문자 처리
+      }, 2000); // 2초 후 자동으로 다음 문자 처리
     } catch (error) {
       console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
     }
   };
 
-  // 지문자 처리 함수
+  // 다음 지문자 처리 함수 (자동으로 실행됨)
   const handleNextCharacter = async () => {
     const currentId = mlIds[currentCharacterIndex]; // 현재 지문자의 ID
 
     if (currentId) {
       await sendIdToMl(currentId); // 현재 지문자의 ID를 ML 서버로 전송
-    }
-
-    // 정답일 경우 다음 지문자로 이동
-    if (mlResult === 1) {
-      setCurrentCharacterIndex((prevIndex) => (prevIndex + 1) % mlIds.length); // 다음 지문자로 이동
     } else {
-      // 오답일 경우 같은 지문자 유지
-      console.log('오답입니다. 다시 시도하세요.');
+      console.error('지문자를 찾을 수 없습니다.');
     }
   };
 
@@ -141,7 +148,6 @@ function GameLevel1() {
                 <span className="current-character">
                   현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content[currentCharacterIndex]}
                 </span>
-                <button onClick={handleNextCharacter}>다음 지문자</button>
               </div>
             </div>
           )}

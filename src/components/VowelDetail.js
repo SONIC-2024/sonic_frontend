@@ -11,6 +11,8 @@ function VowelDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
+  const [repeatCount, setRepeatCount] = useState(0); // 반복 횟수
+  const [isRunning, setIsRunning] = useState(false); // 손 모양 확인 중인지 여부
 
   useEffect(() => {
     if (index) {
@@ -18,26 +20,43 @@ function VowelDetail() {
     }
   }, [index]);
 
+  useEffect(() => {
+    if (repeatCount > 0 && repeatCount <= 3) {
+      // 10초 동안 손 모양 확인 후 ML 서버로 데이터 전송
+      const timer = setTimeout(() => {
+        const vowelId = parseInt(index, 10);
+        if (vowelId >= 15 && vowelId <= 35) {
+          sendVowelToMl(vowelId);
+        }
+      }, 10000); // 10초 타이머
+
+      return () => clearTimeout(timer); // 컴포넌트 언마운트 시 타이머 정리
+    } else if (repeatCount > 3) {
+      resetVowel(); // 3번 반복 후 리셋
+    }
+  }, [repeatCount]);
+
   const loadVowelDetail = async () => {
     try {
       setLoading(true);
       const vowelData = await fetchWordInfo(index); // 모음 세부 정보를 가져오는 API 호출
       if (vowelData) {
         setVowel(vowelData);
-
-        // index 값이 15에서 35 사이인 경우에만 ML 서버로 전송
-        const vowelId = parseInt(index, 10);
-        if (vowelId >= 15 && vowelId <= 35) {
-          sendVowelToMl(vowelId);
-        }
+        startVowelCheck(); // 모음 정보를 로드한 후 손 모양 확인 시작
       } else {
-        setError('모음 정보를 불러올 수 없습니다.');
+        setError('모음 정보를 찾을 수 없습니다.');
       }
     } catch (error) {
       setError('모음 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // 손 모양 확인을 시작하는 함수
+  const startVowelCheck = () => {
+    setIsRunning(true); // 손 모양 확인 시작
+    setRepeatCount(1); // 첫 번째 시도
   };
 
   // ML 서버로 모음 데이터를 전송하는 함수
@@ -54,9 +73,22 @@ function VowelDetail() {
       const result = await response.json();
       console.log('ML 서버 응답:', result);  // ML 서버로부터 받은 응답 로그
       setMlResult(result.result); // 결과 저장 (0 또는 1)
+
+      // 다음 반복으로 이동
+      if (repeatCount < 3) {
+        setRepeatCount(repeatCount + 1); // 반복 횟수 증가
+      }
     } catch (error) {
       console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
     }
+  };
+
+  // 3번 시도 후 화면을 리셋하는 함수
+  const resetVowel = () => {
+    setRepeatCount(0); // 반복 횟수 초기화
+    setMlResult(null); // 결과 초기화
+    setIsRunning(false); // 손 모양 확인 종료
+    alert("손 모양 인식이 3회 종료되었습니다.");
   };
 
   const handleGoBack = () => {
@@ -86,6 +118,9 @@ function VowelDetail() {
                 {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
               </p>
             )}
+
+            {/* 3번 시도 후 종료 메시지 */}
+            {repeatCount > 3 && <p style={{ fontSize: '18px', color: 'blue' }}>손 모양 인식이 종료되었습니다.</p>}
           </>
         ) : (
           <p>모음 정보를 불러올 수 없습니다.</p>

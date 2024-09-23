@@ -12,6 +12,10 @@ function StarquizDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null); // 오류 상태 추가
   const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
+  const [attemptsLeft, setAttemptsLeft] = useState(3); // 3번 반복 시도 횟수
+  const [isChecking, setIsChecking] = useState(false); // ML 서버 검사 중 여부
+  const [checkInterval, setCheckInterval] = useState(null); // 검사 간격 타이머
+
   const navigate = useNavigate(); // navigate 함수 사용
 
   useEffect(() => {
@@ -34,6 +38,8 @@ function StarquizDetail() {
       }
     };
     loadQuizDetail();
+
+    return () => clearInterval(checkInterval); // 컴포넌트 언마운트 시 타이머 클리어
   }, [level, quizId]);
 
   // ML 서버로 데이터 전송 함수 (레벨에 따라 다르게 설정)
@@ -51,9 +57,39 @@ function StarquizDetail() {
       const result = await response.json();
       console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
       setMlResult(result.result); // 결과 저장 (0 또는 1)
+
+      return result.result;
     } catch (error) {
       console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
+      return null;
     }
+  };
+
+  // 10초 간격으로 3번 검사하는 함수
+  const startCheckingMlResult = (id) => {
+    setIsChecking(true);
+    setAttemptsLeft(3); // 3번 검사 초기화
+    setCheckInterval(
+      setInterval(async () => {
+        if (attemptsLeft > 0) {
+          const result = await sendIdToMl(id); // 현재 지문자 ID 전송 및 결과 확인
+
+          if (result === 1) {
+            alert('정답입니다!');
+            clearInterval(checkInterval); // 정답일 경우 타이머 종료
+            setIsChecking(false);
+          } else {
+            console.log('오답입니다. 다시 시도하세요.');
+          }
+
+          setAttemptsLeft((prevAttempts) => prevAttempts - 1); // 시도 횟수 감소
+          if (attemptsLeft <= 1) {
+            clearInterval(checkInterval); // 시도 종료 시 타이머 중단
+            setIsChecking(false);
+          }
+        }
+      }, 10000) // 10초 간격으로 실행
+    );
   };
 
   const handleGoBack = () => {
@@ -67,7 +103,7 @@ function StarquizDetail() {
     // 다음 지문자 ID를 ML 서버로 전송
     const idToSend = currentQuestion?.id[nextIndex];
     if (idToSend) {
-      sendIdToMl(idToSend); // 선택한 지문자 ID를 ML 서버로 전송
+      startCheckingMlResult(idToSend); // 10초 간격으로 ML 서버로 전송
     } else {
       console.error('전송할 ID가 없습니다.');
     }
@@ -105,7 +141,7 @@ function StarquizDetail() {
                     {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
                   </p>
                 )}
-                <button onClick={handleNextCharacter}>다음 문자</button>
+                <button onClick={handleNextCharacter} disabled={isChecking}>다음 문자</button>
               </>
             )}
           </>

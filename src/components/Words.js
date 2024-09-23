@@ -18,8 +18,8 @@ function Words() {
       setLoading(true); // 로딩 시작
       const wordData = await fetchCategoryList('w', currentPage, wordsPerPage); // 페이지당 9개 단어 불러오기
       console.log('API 응답 데이터:', wordData); // 응답 데이터 확인
-      if (wordData && wordData.length > 0) {
-        setWords(wordData); // 단어 데이터를 상태에 저장
+      if (wordData && wordData.data && wordData.data.content.length > 0) {
+        setWords(wordData.data.content); // 단어 데이터를 상태에 저장
       } else {
         setWords([]); // 데이터를 받지 못했을 경우 빈 배열로 설정
       }
@@ -29,7 +29,7 @@ function Words() {
     } finally {
       setLoading(false); // 로딩 종료
     }
-  }, [currentPage, wordsPerPage]);
+  }, [currentPage, wordsPerPage]);  
 
   // 컴포넌트 마운트될 때 단어 목록 불러오기
   useEffect(() => {
