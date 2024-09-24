@@ -1,44 +1,43 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import Container from '../styles/Container';
 import { fetchWordInfo } from '../api';
 import './ConsonantDetail.css';
 import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델
-import '@tensorflow/tfjs-core';
-import '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
+import '@tensorflow/tfjs-backend-webgl';  // WebGL 백엔드 추가
+import '@tensorflow/tfjs-backend-wasm';   // WASM 백엔드 추가
 
 function ConsonantDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
   const webcamRef = useRef(null);
   const [consonant, setConsonant] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [mlResult, setMlResult] = useState(null);
+  const [timer, setTimer] = useState(null);
+  const [popupMessage, setPopupMessage] = useState('');
 
-  useEffect(() => {
-    if (index) {
-      loadConsonantDetail();
-    }
-    initializeHandpose();
-  }, [index]);
-
-  const loadConsonantDetail = async () => {
+  // 자음 정보를 불러오는 함수
+  const loadConsonantDetail = useCallback(async () => {
     try {
-      setLoading(true);
       const response = await fetchWordInfo(index);
       if (response && response.success) {
         setConsonant(response.data);
       }
     } catch (error) {
       console.error('자음 정보를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [index]);
 
-  const initializeHandpose = async () => {
+  // Handpose 모델 초기화 함수
+  const initializeHandpose = useCallback(async () => {
     try {
+      // WebGL 또는 WASM 백엔드 설정
+      await tf.setBackend('webgl'); // 또는 'wasm'을 사용할 수 있습니다.
+      await tf.ready(); // 백엔드 준비 완료
+      console.log('TensorFlow.js 백엔드 로드 완료:', tf.getBackend());
+
       const net = await handpose.load(); // handpose 모델 로드
       console.log("Handpose model loaded.");
 
@@ -58,8 +57,9 @@ function ConsonantDetail() {
     } catch (error) {
       console.error("Handpose 모델 초기화 중 오류 발생:", error);
     }
-  };
+  }, []);
 
+  // ML 서버로 데이터 전송 함수
   const sendToMLServer = async (landmarks) => {
     try {
       await fetch('http://localhost:5000/finger_learn', {
@@ -68,11 +68,36 @@ function ConsonantDetail() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 연속적으로 전송
-      });
+      }).then((response) => response.json())
+        .then((data) => {
+          setMlResult(data.result === 1 ? '정답입니다!' : '오답입니다!');
+          setPopupMessage(data.result === 1 ? '정답입니다!' : '오답입니다!');
+          setTimeout(() => {
+            setPopupMessage(''); // 3초 후 팝업 메시지 사라짐
+          }, 3000);
+        });
+
+      // 10초 내에 결론이 나오지 않으면 '오답입니다!' 처리
+      clearTimeout(timer);
+      setTimer(setTimeout(() => {
+        if (!mlResult) {
+          setMlResult('오답입니다!');
+          setPopupMessage('오답입니다!');
+          setTimeout(() => {
+            setPopupMessage('');
+          }, 3000);
+        }
+      }, 10000));
     } catch (error) {
-      console.error('ML 서버와의 통신 오류가 발생했습니다.', error); // 오류 디버깅용 메시지
+      console.error('ML 서버와의 통신 오류가 발생했습니다.', error);
     }
   };
+
+  // 화면 렌더링 시 자음 정보 및 Handpose 모델 로드
+  useEffect(() => {
+    loadConsonantDetail();
+    initializeHandpose();
+  }, [loadConsonantDetail, initializeHandpose]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -117,9 +142,9 @@ function ConsonantDetail() {
         />
       </div>
 
-      {mlResult && (
-        <div className="ml-result">
-          <p>{mlResult}</p>
+      {popupMessage && (
+        <div className="popup-message">
+          <p>{popupMessage}</p>
         </div>
       )}
     </Container>
