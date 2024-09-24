@@ -96,16 +96,15 @@
 /* 모달 스타일 */
 .modal {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: #fff;
-  padding: 40px;
+  padding: 50px;
   border-radius: 20px;
   width: 400px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
 }
 
 .overlay {

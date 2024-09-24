@@ -15,9 +15,9 @@ function ConsonantDetail() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null); // 캔버스 레퍼런스 추가
   const [consonant, setConsonant] = useState(null);
-  const [mlResult, setMlResult] = useState(null);
-  const [timer, setTimer] = useState(null);
-  const [popupMessage, setPopupMessage] = useState("");
+  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
+  const [popupMessage, setPopupMessage] = useState(""); // 팝업 메시지 상태
+  const [showPopup, setShowPopup] = useState(false); // 팝업창 표시 여부
 
   // 자음 정보를 불러오는 함수
   const loadConsonantDetail = useCallback(async () => {
@@ -42,16 +42,35 @@ function ConsonantDetail() {
       console.log("Handpose model loaded.");
 
       const detect = async () => {
-        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-          const video = webcamRef.current.video;
-          const predictions = await net.estimateHands(video); // 손 관절 예측
-          if (predictions.length > 0) {
-            console.log("손 관절 데이터: ", predictions); // 콘솔 로그로 손 관절 데이터 확인
-            drawHands(predictions); // 손 관절 시각화
-            sendToMLServer(predictions[0].landmarks); // 손 관절 데이터를 연속적으로 전송
+        const startTime = Date.now();
+        let collectedResults = []; // 2초간의 결과 수집 배열
+
+        const intervalId = setInterval(async () => {
+          if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+            const video = webcamRef.current.video;
+            const predictions = await net.estimateHands(video); // 손 관절 예측
+            if (predictions.length > 0) {
+              drawHands(predictions); // 손 관절 시각화
+              const result = await sendToMLServer(predictions[0].landmarks);
+              collectedResults.push(result);
+            }
           }
-        }
-        requestAnimationFrame(detect); // 매 프레임마다 호출
+
+          // 5초 후 평균 계산
+          if (Date.now() - startTime >= 5000) {
+            clearInterval(intervalId);
+            const avgResult = collectedResults.reduce((a, b) => a + b, 0) / collectedResults.length;
+
+            if (avgResult > 0) {
+              setPopupMessage("훌륭합니다. 다음 수어로 넘어갑시다."); // 정답일 경우 팝업 메시지
+              setMlResult(true);
+            } else {
+              setPopupMessage("오답입니다.");
+              setMlResult(false);
+            }
+            setShowPopup(true); // 팝업창 표시
+          }
+        }, 100); // 매 100ms마다 프레임 추적
       };
 
       detect();
@@ -69,55 +88,31 @@ function ConsonantDetail() {
     const videoHeight = webcamRef.current.video.videoHeight;
 
     predictions.forEach((prediction) => {
-      const landmarks = prediction.landmarks;
-
-      // 손 관절 좌표를 웹캠 해상도에 맞게 변환
-      for (let i = 0; i < landmarks.length; i++) {
-        const x = landmarks[i][0] * videoWidth; // 비율에 맞게 x 좌표 변환
-        const y = landmarks[i][1] * videoHeight; // 비율에 맞게 y 좌표 변환
+      prediction.landmarks.forEach((landmark) => {
+        const { x, y } = landmark;
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
         ctx.fillStyle = "red";
         ctx.fill();
-      }
+      });
     });
   };
 
   // ML 서버로 데이터 전송 함수
   const sendToMLServer = async (landmarks) => {
     try {
-      console.log("서버로 전송할 손 관절 데이터: ", landmarks); // 전송할 데이터 확인
-      await fetch("http://localhost:5000/finger_learn", {
+      const response = await fetch("http://localhost:5000/finger_learn", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 연속적으로 전송
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setMlResult(data.result === 1 ? "정답입니다!" : "오답입니다!");
-          setPopupMessage(data.result === 1 ? "정답입니다!" : "오답입니다!");
-          setTimeout(() => {
-            setPopupMessage(""); // 3초 후 팝업 메시지 사라짐
-          }, 3000);
-        });
-
-      // 10초 내에 결론이 나오지 않으면 '오답입니다!' 처리
-      clearTimeout(timer);
-      setTimer(
-        setTimeout(() => {
-          if (!mlResult) {
-            setMlResult("오답입니다!");
-            setPopupMessage("오답입니다!");
-            setTimeout(() => {
-              setPopupMessage("");
-            }, 3000);
-          }
-        }, 10000)
-      );
+        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 전송
+      });
+      const data = await response.json();
+      return data.result; // 결과 반환 (0 또는 1)
     } catch (error) {
       console.error("ML 서버와의 통신 오류가 발생했습니다.", error);
+      return 0; // 오류 시 0 반환 (오답 처리)
     }
   };
 
@@ -128,7 +123,14 @@ function ConsonantDetail() {
   }, [loadConsonantDetail, initializeHandpose]);
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate("/consonants");
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false); // 팝업창 닫기
+    if (mlResult) {
+      navigate("/consonant"); // 정답일 경우 Consonant.js로 돌아가기
+    }
   };
 
   return (
@@ -184,9 +186,12 @@ function ConsonantDetail() {
         />
       </div>
 
-      {popupMessage && (
-        <div className="popup-message">
-          <p>{popupMessage}</p>
+      {showPopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <p>{popupMessage}</p>
+            <button onClick={handleClosePopup}>닫기</button>
+          </div>
         </div>
       )}
     </Container>

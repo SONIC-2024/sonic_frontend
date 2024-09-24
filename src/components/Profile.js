@@ -31,7 +31,7 @@ function Profile() {
   const [handPreference, setHandPreference] = useState('');
   const [tierInfo, setTierInfo] = useState(null);
   const [attendance, setAttendance] = useState(null);
-  const [solvedQuizNumbers, setSolvedQuizNumbers] = useState(null);
+  const [solvedQuizNumbers, setSolvedQuizNumbers] = useState(0);
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
 
@@ -258,7 +258,7 @@ function Profile() {
             <label>
               이메일:
               <input type="email" 
-              placeholder="sbssys55@sookmyung.ac.kr"
+              placeholder="sonic2024it@gmail.com"
               value={email} readOnly />
             </label>
             <div className="password-change">
