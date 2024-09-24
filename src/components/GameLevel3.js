@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../styles/Container';
-import { fetchLevel3Quiz, toggleFavorite } from '../api'; // fetchLevel3Quiz API 호출 함수 추가
+import { fetchLevel3Quiz, toggleFavorite } from '../api';
 import './GameLevel3.css';
+import * as poseDetection from '@tensorflow-models/pose-detection'; // 포즈 모델 추가
+import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
+import '@tensorflow/tfjs-backend-webgl'; // WebGL 백엔드 추가
+import Webcam from 'react-webcam'; // Webcam 컴포넌트 추가
 
 function GameLevel3() {
   const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
@@ -16,10 +20,13 @@ function GameLevel3() {
   const [checkInterval, setCheckInterval] = useState(null); // 검사 간격 타이머
 
   const navigate = useNavigate();
+  const webcamRef = useRef(null);
+  const canvasRef = useRef(null); // 캔버스 참조 추가
 
   useEffect(() => {
     const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
     loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
+    initializePoseModel(); // 포즈 모델 초기화
 
     return () => clearInterval(checkInterval); // 컴포넌트 언마운트 시 타이머 클리어
   }, []);
@@ -31,7 +38,7 @@ function GameLevel3() {
         setCurrentQuestion(response.data); // 퀴즈 데이터 설정
         setIsFavorite(response.data.starred || false); // 즐겨찾기 상태 설정
         setIsLoading(false); // 로딩 상태 해제
-        console.log("퀴즈 데이터 로드:", response.data.starred);
+        console.log('퀴즈 데이터 로드:', response.data.starred);
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
       }
@@ -40,80 +47,91 @@ function GameLevel3() {
     }
   };
 
-  // ML 서버로 데이터 전송하는 함수
-  const sendToMLServer = async (quizId) => {
+  // Pose 모델 초기화 함수
+  const initializePoseModel = useCallback(async () => {
+    try {
+      await tf.setBackend('webgl'); // WebGL 백엔드 사용
+      await tf.ready();
+
+      const detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet, {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        });
+      console.log('Pose 모델 로드 완료');
+
+      const detectPose = async () => {
+        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+          const video = webcamRef.current.video;
+          const poses = await detector.estimatePoses(video); // 포즈 예측
+
+          if (poses.length > 0) {
+            console.log('포즈 데이터:', poses);
+            drawPoses(poses); // 포즈 시각화
+            sendToMLServer(currentQuestion.quiz_id, poses[0].keypoints); // 포즈 데이터 ML 서버로 전송
+          }
+        }
+        requestAnimationFrame(detectPose); // 매 프레임마다 호출
+      };
+
+      detectPose();
+    } catch (error) {
+      console.error('Pose 모델 초기화 중 오류 발생:', error);
+    }
+  }, [currentQuestion?.quiz_id]);
+
+  // 캔버스에 포즈 시각화 함수
+  const drawPoses = (poses) => {
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
+
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
+
+    poses.forEach((pose) => {
+      pose.keypoints.forEach((keypoint) => {
+        const { x, y } = keypoint;
+        ctx.beginPath();
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+      });
+    });
+  };
+
+  // ML 서버로 포즈 데이터 전송 함수
+  const sendToMLServer = async (quizId, keypoints) => {
     try {
       const response = await fetch('http://localhost:5000/body_quiz', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: quizId }), // 퀴즈 ID를 ML 서버로 전송
+        body: JSON.stringify({ id: quizId, keypoints }), // 포즈 데이터를 ML 서버로 전송
       });
-
       const result = await response.json();
-      console.log('ML 서버 응답:', result);  // ML 서버로부터 받은 응답 로그
-      setMlResult(result.result); // 0 또는 1의 결과 저장
-
+      console.log('ML 서버 응답:', result); // ML 서버로부터 받은 응답 로그
+      setMlResult(result.result);
       return result.result;
     } catch (error) {
-      console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
+      console.error('ML 서버와의 통신 중 오류:', error);
       return null;
     }
   };
 
-  // 10초 간격으로 3번 검사하는 함수
-  const startCheckingMlResult = (quizId) => {
-    setIsChecking(true);
-    setAttemptsLeft(3); // 3번 검사 초기화
-    setCheckInterval(
-      setInterval(async () => {
-        if (attemptsLeft > 0) {
-          const result = await sendToMLServer(quizId); // 현재 퀴즈 ID 전송 및 결과 확인
-
-          if (result === 1) {
-            alert('정답입니다!');
-            clearInterval(checkInterval); // 정답일 경우 타이머 종료
-            setIsChecking(false);
-          } else {
-            console.log('오답입니다. 다시 시도하세요.');
-          }
-
-          setAttemptsLeft((prevAttempts) => prevAttempts - 1); // 시도 횟수 감소
-          if (attemptsLeft <= 1) {
-            clearInterval(checkInterval); // 시도 종료 시 타이머 중단
-            setIsChecking(false);
-          }
-        }
-      }, 10000) // 10초 간격으로 실행
-    );
-  };
-
   // 즐겨찾기 처리 함수
   const handleFavoriteClick = async () => {
-    const favoriteQuizId = currentQuestion?.quiz_id || 200;  // 현재 퀴즈의 ID 사용
-  
+    const favoriteQuizId = currentQuestion?.quiz_id || 200; // 현재 퀴즈의 ID 사용
+
     try {
-      console.log("즐겨찾기에 사용할 퀴즈 ID:", favoriteQuizId); // 현재 퀴즈 ID 확인
-      const response = await toggleFavorite(favoriteQuizId); // 현재 퀴즈 ID로 즐겨찾기 요청
+      console.log('즐겨찾기에 사용할 퀴즈 ID:', favoriteQuizId); // 현재 퀴즈 ID 확인
+      const response = await toggleFavorite(favoriteQuizId); // 즐겨찾기 요청
       if (response.success) {
         const newFavoriteState = !isFavorite;
         setIsFavorite(newFavoriteState); // 즐겨찾기 상태 반전
 
-        // 즐겨찾기 팝업 메시지 설정
-        if (newFavoriteState) {
-          setFavoriteMessage('즐겨찾기에 등록되었습니다.');
-        } else {
-          setFavoriteMessage('즐겨찾기에서 해제되었습니다.');
-        }
-
-        // 팝업 상태를 true로 설정하여 팝업 표시
-        setShowFavoritePopup(true);
-        setTimeout(() => {
-          setShowFavoritePopup(false); // 2초 후 팝업 숨김
-        }, 2000);
-
-        console.log('즐겨찾기 클릭 후 상태:', newFavoriteState);
+        setFavoriteMessage(newFavoriteState ? '즐겨찾기에 등록되었습니다.' : '즐겨찾기에서 해제되었습니다.');
+        setShowFavoritePopup(true); // 팝업 표시
+        setTimeout(() => setShowFavoritePopup(false), 2000); // 2초 후 팝업 숨김
       }
     } catch (error) {
       console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
@@ -124,16 +142,12 @@ function GameLevel3() {
     navigate(-1); // 이전 페이지로 이동
   };
 
-  // ML 서버와 연동을 위한 버튼 추가 및 10초 간격 검사 시작
-  const handleSendToML = () => {
-    const quizIdToSend = currentQuestion?.quiz_id || 200;  // 현재 퀴즈의 ID 사용
-    startCheckingMlResult(quizIdToSend); // 검사 시작
-  };
-
   return (
     <Container className="game-level3-container">
       <div className="game-level3-left">
-        <button className="back-button" onClick={handleGoBack}>&larr;</button>
+        <button className="back-button" onClick={handleGoBack}>
+          &larr;
+        </button>
         <div className="word-display">
           {isLoading ? (
             <span>Loading...</span>
@@ -142,8 +156,9 @@ function GameLevel3() {
           )}
         </div>
       </div>
+
       <div className="game-level3-right">
-        <button 
+        <button
           className={`favorite-button ${isFavorite ? 'active' : ''}`} // 상태에 따라 클래스 변경
           onClick={handleFavoriteClick}
         >
@@ -151,7 +166,17 @@ function GameLevel3() {
         </button>
         <div className="cam-placeholder">
           <h2 className="video-title">Live Video Feed</h2>
-          <img src="http://localhost:5000/video_feed_body" alt="Live Video Feed" className="video-feed" />
+          <Webcam ref={webcamRef} className="video-feed" screenshotFormat="image/jpeg" />
+          <canvas
+            ref={canvasRef}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+            }}
+          />
         </div>
       </div>
 

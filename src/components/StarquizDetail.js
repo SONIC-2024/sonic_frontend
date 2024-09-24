@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Container from '../styles/Container';
 import { fetchQuizDetail } from '../api'; // API 함수 불러오기
 import './StarquizDetail.css';
+import Webcam from 'react-webcam'; // 웹캠 컴포넌트 추가
+import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델 추가 (레벨 1)
+import * as poseDetection from '@tensorflow-models/pose-detection'; // 포즈 모델 추가 (레벨 3)
+import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
+import '@tensorflow/tfjs-backend-webgl'; // WebGL 백엔드 추가
 
 function StarquizDetail() {
   const { level, quizId } = useParams(); // URL에서 레벨과 퀴즈 ID 가져옴
   const [quizDetail, setQuizDetail] = useState(null);
-  const [currentQuestion, setCurrentQuestion] = useState(null); // 현재 질문 상태 추가
   const [currentCharacterIndex, setCurrentCharacterIndex] = useState(0); // 현재 문자 인덱스 추가
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null); // 오류 상태 추가
@@ -17,16 +21,15 @@ function StarquizDetail() {
   const [checkInterval, setCheckInterval] = useState(null); // 검사 간격 타이머
 
   const navigate = useNavigate(); // navigate 함수 사용
+  const webcamRef = useRef(null); // 웹캠 참조
+  const canvasRef = useRef(null); // 캔버스 참조
 
   useEffect(() => {
     const loadQuizDetail = async () => {
       try {
         const response = await fetchQuizDetail(level, quizId);
-        console.log('API 응답:', response.data);  // 콘솔에 전체 API 응답 구조 확인
-
         if (response.data.quiz_id <= 30 || level !== '1') {
           setQuizDetail(response.data);
-          setCurrentQuestion(response.data);
         } else {
           setError('해당 퀴즈는 레벨 1의 범위에 맞지 않습니다.');
         }
@@ -39,8 +42,117 @@ function StarquizDetail() {
     };
     loadQuizDetail();
 
-    return () => clearInterval(checkInterval); // 컴포넌트 언마운트 시 타이머 클리어
+    // 레벨 3에서 포즈 모델을 초기화
+    if (level === '3') {
+      initializePoseModel();
+    }
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => clearInterval(checkInterval);
   }, [level, quizId]);
+
+  // 손 인식 모델 초기화 함수 (레벨 1)
+  const initializeHandpose = useCallback(async () => {
+    if (level === '1') {
+      try {
+        await tf.setBackend('webgl'); // WebGL 백엔드 사용
+        await tf.ready();
+
+        const net = await handpose.load(); // handpose 모델 로드
+        console.log('Handpose 모델 로드 완료');
+
+        const detect = async () => {
+          if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+            const video = webcamRef.current.video;
+            const predictions = await net.estimateHands(video); // 손 관절 예측
+
+            if (predictions.length > 0) {
+              console.log('손 관절 데이터:', predictions);
+              drawHands(predictions); // 손 관절 시각화
+              sendIdToMl(quizDetail?.quiz_id); // 예측 결과를 ML 서버로 전송
+            }
+          }
+          requestAnimationFrame(detect); // 매 프레임마다 호출
+        };
+
+        detect();
+      } catch (error) {
+        console.error('Handpose 모델 초기화 중 오류 발생:', error);
+      }
+    }
+  }, [quizDetail?.quiz_id]);
+
+  // 포즈 모델 초기화 함수 (레벨 3)
+  const initializePoseModel = useCallback(async () => {
+    if (level === '3') {
+      try {
+        await tf.setBackend('webgl'); // WebGL 백엔드 사용
+        await tf.ready();
+
+        const detector = await poseDetection.createDetector(
+          poseDetection.SupportedModels.MoveNet, {
+            modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+          });
+        console.log('Pose 모델 로드 완료');
+
+        const detectPose = async () => {
+          if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+            const video = webcamRef.current.video;
+            const poses = await detector.estimatePoses(video); // 포즈 예측
+
+            if (poses.length > 0) {
+              console.log('포즈 데이터:', poses);
+              drawPoses(poses); // 포즈 시각화
+              sendIdToMl(quizDetail?.quiz_id, poses[0].keypoints); // 포즈 데이터 ML 서버로 전송
+            }
+          }
+          requestAnimationFrame(detectPose); // 매 프레임마다 호출
+        };
+
+        detectPose();
+      } catch (error) {
+        console.error('Pose 모델 초기화 중 오류 발생:', error);
+      }
+    }
+  }, [quizDetail?.quiz_id]);
+
+  // 손 관절 시각화 함수
+  const drawHands = (predictions) => {
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
+
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
+
+    predictions.forEach((prediction) => {
+      prediction.landmarks.forEach((landmark) => {
+        const { x, y } = landmark;
+        ctx.beginPath();
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      });
+    });
+  };
+
+  // 포즈 시각화 함수 (레벨 3)
+  const drawPoses = (poses) => {
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
+
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
+
+    poses.forEach((pose) => {
+      pose.keypoints.forEach((keypoint) => {
+        const { x, y } = keypoint;
+        ctx.beginPath();
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+      });
+    });
+  };
 
   // ML 서버로 데이터 전송 함수 (레벨에 따라 다르게 설정)
   const sendIdToMl = async (id) => {
@@ -57,7 +169,6 @@ function StarquizDetail() {
       const result = await response.json();
       console.log('ML 서버 응답:', result);  // Flask로부터 받은 응답 로그
       setMlResult(result.result); // 결과 저장 (0 또는 1)
-
       return result.result;
     } catch (error) {
       console.error('ML 서버로 데이터 전송 중 오류 발생:', error);
@@ -65,48 +176,8 @@ function StarquizDetail() {
     }
   };
 
-  // 10초 간격으로 3번 검사하는 함수
-  const startCheckingMlResult = (id) => {
-    setIsChecking(true);
-    setAttemptsLeft(3); // 3번 검사 초기화
-    setCheckInterval(
-      setInterval(async () => {
-        if (attemptsLeft > 0) {
-          const result = await sendIdToMl(id); // 현재 지문자 ID 전송 및 결과 확인
-
-          if (result === 1) {
-            alert('정답입니다!');
-            clearInterval(checkInterval); // 정답일 경우 타이머 종료
-            setIsChecking(false);
-          } else {
-            console.log('오답입니다. 다시 시도하세요.');
-          }
-
-          setAttemptsLeft((prevAttempts) => prevAttempts - 1); // 시도 횟수 감소
-          if (attemptsLeft <= 1) {
-            clearInterval(checkInterval); // 시도 종료 시 타이머 중단
-            setIsChecking(false);
-          }
-        }
-      }, 10000) // 10초 간격으로 실행
-    );
-  };
-
   const handleGoBack = () => {
     navigate(`/starquiz`); // Starquiz 페이지로 돌아가기
-  };
-
-  const handleNextCharacter = () => {
-    const nextIndex = (currentCharacterIndex + 1) % currentQuestion?.detailed_content?.length;
-    setCurrentCharacterIndex(nextIndex);
-
-    // 다음 지문자 ID를 ML 서버로 전송
-    const idToSend = currentQuestion?.id[nextIndex];
-    if (idToSend) {
-      startCheckingMlResult(idToSend); // 10초 간격으로 ML 서버로 전송
-    } else {
-      console.error('전송할 ID가 없습니다.');
-    }
   };
 
   return (
@@ -119,29 +190,32 @@ function StarquizDetail() {
           <p>{error}</p>
         ) : quizDetail ? (
           <>
-            {/* 레벨 3에서 지문자 없이 퀴즈 텍스트만 표시 */}
             {level === '3' && (
-              <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
-                {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
-              </p>
+              <>
+                <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
+                  {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
+                </p>
+                {mlResult !== null && (
+                  <p style={{ fontSize: '24px', color: mlResult === 1 ? 'green' : 'red' }}>
+                    {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
+                  </p>
+                )}
+              </>
             )}
 
-            {/* 레벨 1에서 지문자 표시 및 처리 */}
             {level === '1' && (
               <>
                 <p className="quiz-text" style={{ fontSize: '64px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
                   {quizDetail.content ? quizDetail.content : "No Content Available"} {/* content 사용 */}
                 </p>
                 <p className="current-character" style={{ fontSize: '48px', color: 'black', wordWrap: 'break-word', maxWidth: '80%' }}>
-                  현재 맞춰야 하는 지문자: {currentQuestion?.detailed_content?.[currentCharacterIndex] || "No Character Available"} {/* 지문자 표시 */}
+                  현재 맞춰야 하는 지문자: {quizDetail.detailed_content?.[currentCharacterIndex] || "No Character Available"} {/* 지문자 표시 */}
                 </p>
-                {/* ML 서버 결과 표시 */}
                 {mlResult !== null && (
                   <p style={{ fontSize: '24px', color: mlResult === 1 ? 'green' : 'red' }}>
                     {mlResult === 1 ? '정답입니다!' : '오답입니다!'}
                   </p>
                 )}
-                <button onClick={handleNextCharacter} disabled={isChecking}>다음 문자</button>
               </>
             )}
           </>
@@ -152,7 +226,17 @@ function StarquizDetail() {
 
       <div className="cam-placeholder">
         <h2 className="video-title">Live Video Feed</h2>
-        <img src="http://localhost:5000/video_feed_body" alt="Live Video Feed" className="video-feed" />
+        <Webcam ref={webcamRef} className="video-feed" screenshotFormat="image/jpeg" />
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        />
       </div>
     </Container>
   );

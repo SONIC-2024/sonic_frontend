@@ -3,19 +3,18 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overflow: auto; /* 스크롤이 필요할 경우 활성화 */
+  overflow: hidden;
 }
 
 .consonant-detail-container {
   display: flex;
   height: 100vh;
   width: 100vw;
-  flex-direction: column;
 }
 
 .detail-content {
   flex: 1;
-  background-color: #FFFFFF;
+  background-color: #FFFFFF !important;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,16 +27,16 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  width: 50vw;
+  height: 100vh; /* 화면 높이를 100%로 설정 */
+  width: 50vw; /* 화면의 50%를 정확히 차지하게 설정 */
 }
 
 .video-feed {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 100%; /* 비디오를 컨테이너의 가로 100%로 채움 */
+  height: 100%; /* 비디오를 컨테이너의 세로 100%로 채움 */
+  object-fit: cover; /* 비디오가 컨테이너를 넘치지 않고 꽉 차게 설정 */
   background-color: #FFF;
-  transform: scaleX(-1);
+  transform: scaleX(-1); /* 좌우 반전 제거 */
 }
 
 .back-button {
@@ -50,72 +49,36 @@ html, body {
   cursor: pointer;
 }
 
-.back-button:hover {
-  color: #FFD700; /* 호버 시 시각적 피드백 */
-}
-
 .image-container {
   position: relative;
-  width: 100%;
-  max-width: 2000px;
-  margin-top: 20px; /* 이미지 상단 간격 추가 */
+  width: 100%; /* 큰 이미지 컨테이너의 크기를 설정 */
+  max-width: 2000px; /* 최대 너비 설정 */
 }
 
 .small-image {
   position: absolute;
-  top: -100px;
-  right: 10px;
-  width: 25%;
+  top: -100px; /* 상단으로 위치 조정 */
+  right: 10px; /* 오른쪽 상단에 고정 */
+  width: 25%; /* 작은 이미지 크기 */
   height: auto;
 }
 
 .consonant-character {
   font-size: 48px;
   position: absolute;
-  top: 10px;
+  top: 10px; /* 자음을 상단 중앙에 배치 */
   left: 50%;
   transform: translateX(-50%);
   font-weight: bold;
-  color: #000;
 }
 
 .large-image {
-  width: 100%;
+  width: 100%; /* 큰 이미지를 컨테이너 크기에 맞게 조정 */
   height: auto;
-  margin-top: 50px;
+  margin-top: 50px; /* 이미지와 자음 간격 추가 */
 }
 
 .back-arrow {
   font-size: 24px;
-  color: black;
-}
-
-@media (max-width: 768px) {
-  .consonant-character {
-    font-size: 36px; /* 작은 화면에서 폰트 크기 줄이기 */
-  }
-
-  .small-image {
-    top: -50px; /* 작은 화면에서 이미지 위치 조정 */
-    width: 30%; /* 작은 화면에서 이미지 크기 조정 */
-  }
-
-  .large-image {
-    margin-top: 30px; /* 이미지 간격 조정 */
-  }
-}
-
-@media (max-width: 480px) {
-  .consonant-character {
-    font-size: 28px; /* 더 작은 화면에서 폰트 크기 줄이기 */
-  }
-
-  .small-image {
-    top: -30px;
-    width: 35%;
-  }
-
-  .large-image {
-    margin-top: 20px;
-  }
+  color: black; /* 화살표 색상 검정으로 설정 */
 }
