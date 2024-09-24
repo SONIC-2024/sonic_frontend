@@ -64,17 +64,11 @@ function ConsonantDetail() {
   const drawHands = (predictions) => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
-
-    const videoWidth = webcamRef.current.video.videoWidth;
-    const videoHeight = webcamRef.current.video.videoHeight;
-
     predictions.forEach(prediction => {
       const landmarks = prediction.landmarks;
-
-      // 손 관절 좌표를 웹캠 해상도에 맞게 변환
       for (let i = 0; i < landmarks.length; i++) {
-        const x = landmarks[i][0] * videoWidth;  // 비율에 맞게 x 좌표 변환
-        const y = landmarks[i][1] * videoHeight; // 비율에 맞게 y 좌표 변환
+        const x = landmarks[i][0];
+        const y = landmarks[i][1];
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, 2 * Math.PI);
         ctx.fillStyle = "red";

@@ -14,11 +14,11 @@ function WordDetail() {
   const [error, setError] = useState(null);
   const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태 추가
   const [attemptsLeft, setAttemptsLeft] = useState(3); // 남은 시도 횟수
+  const [isChecking, setIsChecking] = useState(false); // 체크 중인지 상태
 
   useEffect(() => {
     if (id) {
       loadWord();
-      startCheckingMlResult(id); // 컴포넌트 로드 시 바로 ML 결과 확인 시작
     }
     return () => clearInterval(); // 컴포넌트가 언마운트되면 타이머 정리
   }, [id]);
@@ -47,8 +47,8 @@ function WordDetail() {
     }
   };  
   
-  // ML 서버로 단어의 ID와 웹캠 이미지를 전송하는 함수
-  const sendWordToMl = async (id) => {
+  // ML 서버로 단어와 웹캠 이미지를 전송하는 함수
+  const sendWordToMl = async (word) => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot(); // 웹캠 이미지 캡처
       try {
@@ -57,7 +57,7 @@ function WordDetail() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ id, image: imageSrc }),  // 단어의 ID와 이미지 전송
+          body: JSON.stringify({ id: word, image: imageSrc }),  // 단어와 이미지 전송
         });
 
         const result = await response.json();
@@ -71,14 +71,16 @@ function WordDetail() {
   };
 
   // ML 결과를 일정 간격마다 확인하고, 3회 반복
-  const startCheckingMlResult = (id) => {
+  const startCheckingMlResult = (word) => {
+    setIsChecking(true);
     const interval = setInterval(async () => {
       if (attemptsLeft > 0) {
-        const result = await sendWordToMl(id); // ML 서버로 단어 ID 전송 및 결과 수신
+        const result = await sendWordToMl(word); // ML 서버로 단어 전송 및 결과 수신
         setMlResult(result);
         setAttemptsLeft((prev) => prev - 1);
         if (result === 1 || attemptsLeft <= 1) {
           clearInterval(interval); // 정답이 맞거나 시도가 끝나면 반복 중단
+          setIsChecking(false);
         }
       }
     }, 10000); // 10초 간격으로 실행
@@ -111,6 +113,12 @@ function WordDetail() {
             )}
             {/* 남은 시도 횟수 표시 */}
             <p>남은 시도 횟수: {attemptsLeft}</p>
+            {/* 버튼으로 ML 체크 시작 */}
+            {!isChecking && (
+              <button onClick={() => startCheckingMlResult(word)}>
+                단어 체크 시작
+              </button>
+            )}
           </>
         ) : (
           <p>단어 정보를 불러올 수 없습니다.</p>
