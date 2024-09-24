@@ -17,6 +17,7 @@ function WordDetail() {
   const [word, setWord] = useState(null);
   const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태 추가
   const [popupMessage, setPopupMessage] = useState('');
+  const [showImage, setShowImage] = useState(false); // 이미지 표시 상태 추가
 
   // 단어 정보를 불러오는 함수
   const loadWord = useCallback(async () => {
@@ -24,6 +25,11 @@ function WordDetail() {
       const wordData = await fetchWordInfo(id);
       if (wordData && wordData.success) {
         setWord(wordData.data.content);
+        if (wordData.data.content === '안녕하세요') {
+          setShowImage(true); // 단어가 '안녕하세요'인 경우 이미지 표시
+        } else {
+          setShowImage(false); // 그렇지 않은 경우 이미지 숨김
+        }
       } else {
         console.error('단어 정보를 찾을 수 없습니다.');
       }
@@ -130,6 +136,10 @@ function WordDetail() {
           </>
         ) : (
           <p>단어 정보를 불러올 수 없습니다.</p>
+        )}
+        {/* 단어가 '안녕하세요'일 경우 이미지를 표시 */}
+        {showImage && (
+          <img src="/images/word36.png" alt="Word 36" className="word-image" />
         )}
       </div>
 
