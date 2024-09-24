@@ -34,7 +34,7 @@ function Consonants() {
   }, []);
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate("/");
   };
 
   const handleConsonantClick = (id) => {

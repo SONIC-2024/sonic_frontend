@@ -70,7 +70,7 @@ function ConsonantDetail() {
             }
             setShowPopup(true); // 팝업창 표시
           }
-        }, 100); // 매 100ms마다 프레임 추적
+        }, 1000); // 매 1000ms마다 프레임 추적
       };
 
       detect();
@@ -129,7 +129,7 @@ function ConsonantDetail() {
   const handleClosePopup = () => {
     setShowPopup(false); // 팝업창 닫기
     if (mlResult) {
-      navigate("/consonant"); // 정답일 경우 Consonant.js로 돌아가기
+      navigate("/consonants"); // 정답일 경우 Consonant.js로 돌아가기
     }
   };
 

@@ -46,16 +46,9 @@ function GameLevel2() {
     generateQuestion(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
   }, []);
 
-  // 정답 이미지 파일 로드 로직
+  // 정답 이미지 파일 로드 로직 업데이트 (자음/모음 배우기 방식)
   const loadImages = (quizId) => {
-    const pngUrl = `/images/quiz_id@${quizId}.png`; // PNG 이미지 경로
-    const gifUrl = `/images/Quiz_id@${quizId}.gif`; // GIF 이미지 경로
-
-    // PNG 로드
-    const pngImage = new Image();
-    pngImage.src = pngUrl;
-    pngImage.onload = () => setCurrentImagePng(pngUrl);  // PNG가 로드되면 상태 설정
-    pngImage.onerror = () => setCurrentImagePng('');  // PNG가 없을 경우 빈 문자열 설정
+    const gifUrl = `/images/Quiz_id100.gif`; // GIF 이미지 경로 (자음 GIF)
 
     // GIF 로드
     const gifImage = new Image();
