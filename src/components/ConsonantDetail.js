@@ -13,6 +13,7 @@ function ConsonantDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
   const webcamRef = useRef(null);
+  const canvasRef = useRef(null);  // 캔버스 레퍼런스 추가
   const [consonant, setConsonant] = useState(null);
   const [mlResult, setMlResult] = useState(null);
   const [timer, setTimer] = useState(null);
@@ -33,7 +34,6 @@ function ConsonantDetail() {
   // Handpose 모델 초기화 함수
   const initializeHandpose = useCallback(async () => {
     try {
-      // WebGL 또는 WASM 백엔드 설정
       await tf.setBackend('webgl'); // 또는 'wasm'을 사용할 수 있습니다.
       await tf.ready(); // 백엔드 준비 완료
       console.log('TensorFlow.js 백엔드 로드 완료:', tf.getBackend());
@@ -44,10 +44,11 @@ function ConsonantDetail() {
       const detect = async () => {
         if (webcamRef.current && webcamRef.current.video.readyState === 4) {
           const video = webcamRef.current.video;
-
           const predictions = await net.estimateHands(video); // 손 관절 예측
           if (predictions.length > 0) {
-            sendToMLServer(predictions[0].landmarks); // 연속적인 손 관절 데이터 전송
+            console.log("손 관절 데이터: ", predictions);  // 콘솔 로그로 손 관절 데이터 확인
+            drawHands(predictions);  // 손 관절 시각화
+            sendToMLServer(predictions[0].landmarks); // 손 관절 데이터를 연속적으로 전송
           }
         }
         requestAnimationFrame(detect); // 매 프레임마다 호출
@@ -59,9 +60,42 @@ function ConsonantDetail() {
     }
   }, []);
 
+  // 캔버스에 손 관절 시각화 함수
+  const drawHands = (predictions) => {
+    const ctx = canvasRef.current.getContext("2d");
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
+
+    // 캔버스를 비디오 크기로 맞춤
+    canvasRef.current.width = videoWidth;
+    canvasRef.current.height = videoHeight;
+
+    // 이전 프레임 지우기
+    ctx.clearRect(0, 0, videoWidth, videoHeight);
+
+    predictions.forEach(prediction => {
+      const landmarks = prediction.landmarks;
+
+      // 손 관절 좌표를 웹캠 해상도에 맞게 변환
+      for (let i = 0; i < landmarks.length; i++) {
+        const [x, y] = [
+          landmarks[i][0] * videoWidth,  // 비율에 맞게 x 좌표 변환
+          landmarks[i][1] * videoHeight  // 비율에 맞게 y 좌표 변환
+        ];
+
+        // 랜드마크 그리기
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+        ctx.fill();
+      }
+    });
+  };
+
   // ML 서버로 데이터 전송 함수
   const sendToMLServer = async (landmarks) => {
     try {
+      console.log("서버로 전송할 손 관절 데이터: ", landmarks);  // 전송할 데이터 확인
       await fetch('http://localhost:5000/finger_learn', {
         method: 'POST',
         headers: {
@@ -139,6 +173,10 @@ function ConsonantDetail() {
           screenshotFormat="image/jpeg"
           className="video-feed"
           mirrored={false}
+        />
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%' }}
         />
       </div>
 
