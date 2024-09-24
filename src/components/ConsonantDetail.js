@@ -63,30 +63,21 @@ function ConsonantDetail() {
   // 캔버스에 손 관절 시각화 함수
   const drawHands = (predictions) => {
     const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
+
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
-
-    // 캔버스를 비디오 크기로 맞춤
-    canvasRef.current.width = videoWidth;
-    canvasRef.current.height = videoHeight;
-
-    // 이전 프레임 지우기
-    ctx.clearRect(0, 0, videoWidth, videoHeight);
 
     predictions.forEach(prediction => {
       const landmarks = prediction.landmarks;
 
       // 손 관절 좌표를 웹캠 해상도에 맞게 변환
       for (let i = 0; i < landmarks.length; i++) {
-        const [x, y] = [
-          landmarks[i][0] * videoWidth,  // 비율에 맞게 x 좌표 변환
-          landmarks[i][1] * videoHeight  // 비율에 맞게 y 좌표 변환
-        ];
-
-        // 랜드마크 그리기
+        const x = landmarks[i][0] * videoWidth;  // 비율에 맞게 x 좌표 변환
+        const y = landmarks[i][1] * videoHeight; // 비율에 맞게 y 좌표 변환
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+        ctx.fillStyle = "red";
         ctx.fill();
       }
     });
