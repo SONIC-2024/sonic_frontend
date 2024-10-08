@@ -1,3 +1,10 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
 .game-level2-container {
   display: flex;
   height: 100vh;
@@ -11,7 +18,6 @@
   align-items: center;
   justify-content: center;
   background-color: #FFEAD2;
-  position: relative;
 }
 
 .back-button {
@@ -32,7 +38,6 @@
   align-items: center;
   justify-content: center;
   background-color: #8294C4;
-  position: relative;
 }
 
 .favorite-button {
@@ -46,7 +51,6 @@
   color: transparent;
   text-shadow: 0 0 0 yellow;
   z-index: 100;
-  outline: none;
 }
 
 .favorite-button.active {
@@ -70,8 +74,8 @@
   font-size: 24px;
   cursor: pointer;
   margin: 10px;
-  width: 200px; /* 보기 버튼의 크기 설정 */
-  height: 60px; /* 보기 버튼의 높이 설정 */
+  width: 200px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +83,7 @@
 }
 
 .option-button:hover {
-  background-color: #FFD700; /* 버튼에 마우스를 올릴 때 배경색 */
+  background-color: #FFD700;
 }
 
 .progress-indicator {
@@ -88,7 +92,6 @@
   color: #FFEAD2;
 }
 
-/* 추가된 스타일: 정답 및 오답 표시 */
 .result-modal {
   position: absolute;
   top: 50%;
@@ -102,31 +105,6 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.result-overlay {
-  background-color: rgba(0, 0, 0, 0.75);
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-content h2 {
-  margin-bottom: 20px;
-  font-size: 48px;
-  font-weight: bold;
-}
-
-/* 정답과 오답 아이콘 */
 .correct-icon, .wrong-icon {
   font-size: 150px;
   font-weight: bold;
@@ -155,30 +133,24 @@
 .next-button:hover {
   background-color: #45a049;
 }
-/* PopupModal에 적용할 스타일 */
+
 .popup-modal {
   position: fixed;
-  top: 50%; /* 수직 중앙 */
-  left: 50%; /* 수평 중앙 */
-  transform: translate(-50%, -50%); /* 정확히 중앙으로 이동 */
-  background-color: rgba(255, 255, 255, 0.95); /* 약간 투명한 흰색 배경 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.95);
   padding: 20px 30px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* 최상위에 표시 */
+  z-index: 1000;
   max-width: 300px;
   text-align: center;
   font-size: 16px;
   color: #333;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
 .popup-modal.hide {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
-
-

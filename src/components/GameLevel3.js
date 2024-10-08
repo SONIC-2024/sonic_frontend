@@ -15,9 +15,7 @@ function GameLevel3() {
   const [favoriteMessage, setFavoriteMessage] = useState(''); // 즐겨찾기 팝업 메시지
   const [showFavoritePopup, setShowFavoritePopup] = useState(false); // 즐겨찾기 팝업 상태
   const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
-  const [attemptsLeft, setAttemptsLeft] = useState(3); // 3번 반복 시도 횟수
   const [isChecking, setIsChecking] = useState(false); // ML 서버 검사 중 여부
-  const [checkInterval, setCheckInterval] = useState(null); // 검사 간격 타이머
 
   const navigate = useNavigate();
   const webcamRef = useRef(null);
@@ -26,10 +24,7 @@ function GameLevel3() {
   useEffect(() => {
     const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
     loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
-    initializePoseModel(); // 포즈 모델 초기화
-
-    return () => clearInterval(checkInterval); // 컴포넌트 언마운트 시 타이머 클리어
-  }, []);
+  }, []); // 빈 배열을 전달하여 한 번만 실행
 
   const loadQuizData = async (quizId) => {
     try {
@@ -38,7 +33,6 @@ function GameLevel3() {
         setCurrentQuestion(response.data); // 퀴즈 데이터 설정
         setIsFavorite(response.data.starred || false); // 즐겨찾기 상태 설정
         setIsLoading(false); // 로딩 상태 해제
-        console.log('퀴즈 데이터 로드:', response.data.starred);
       } else {
         console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
       }
@@ -77,7 +71,13 @@ function GameLevel3() {
     } catch (error) {
       console.error('Pose 모델 초기화 중 오류 발생:', error);
     }
-  }, [currentQuestion?.quiz_id]);
+  }, [currentQuestion?.quiz_id]); // currentQuestion.quiz_id에 의존
+
+  useEffect(() => {
+    if (currentQuestion) {
+      initializePoseModel(); // 퀴즈 데이터 로드 완료 후 포즈 모델 초기화
+    }
+  }, [currentQuestion, initializePoseModel]); // currentQuestion 변경 시마다 호출
 
   // 캔버스에 포즈 시각화 함수
   const drawPoses = (poses) => {
@@ -123,7 +123,6 @@ function GameLevel3() {
     const favoriteQuizId = currentQuestion?.quiz_id || 200; // 현재 퀴즈의 ID 사용
 
     try {
-      console.log('즐겨찾기에 사용할 퀴즈 ID:', favoriteQuizId); // 현재 퀴즈 ID 확인
       const response = await toggleFavorite(favoriteQuizId); // 즐겨찾기 요청
       if (response.success) {
         const newFavoriteState = !isFavorite;

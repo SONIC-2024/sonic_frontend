@@ -4,20 +4,18 @@ import Webcam from "react-webcam";
 import Container from "../styles/Container";
 import { fetchWordInfo } from "../api";
 import "./ConsonantDetail.css";
-import * as handpose from "@tensorflow-models/handpose"; // 손 관절 모델
-import * as tf from "@tensorflow/tfjs"; // TensorFlow.js 객체 가져오기
-import "@tensorflow/tfjs-backend-webgl"; // WebGL 백엔드 추가
-import "@tensorflow/tfjs-backend-wasm"; // WASM 백엔드 추가
+import * as handpose from "@tensorflow-models/handpose";
+import * as tf from "@tensorflow/tfjs";
+import "@tensorflow/tfjs-backend-webgl";
 
 function ConsonantDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
   const webcamRef = useRef(null);
-  const canvasRef = useRef(null); // 캔버스 레퍼런스 추가
+  const canvasRef = useRef(null);
   const [consonant, setConsonant] = useState(null);
-  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
-  const [popupMessage, setPopupMessage] = useState(""); // 팝업 메시지 상태
-  const [showPopup, setShowPopup] = useState(false); // 팝업창 표시 여부
+  const [popupMessage, setPopupMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
 
   // 자음 정보를 불러오는 함수
   const loadConsonantDetail = useCallback(async () => {
@@ -34,43 +32,38 @@ function ConsonantDetail() {
   // Handpose 모델 초기화 함수
   const initializeHandpose = useCallback(async () => {
     try {
-      await tf.setBackend("webgl"); // 또는 'wasm'을 사용할 수 있습니다.
-      await tf.ready(); // 백엔드 준비 완료
-      console.log("TensorFlow.js 백엔드 로드 완료:", tf.getBackend());
+      // WebGL 백엔드 사용 설정
+      await tf.setBackend("webgl");
+      await tf.ready(); // TensorFlow.js 백엔드 준비
 
-      const net = await handpose.load(); // handpose 모델 로드
-      console.log("Handpose model loaded.");
+      // Handpose 모델 로드
+      const net = await handpose.load();
+      console.log("Handpose 모델 로드 완료");
 
       const detect = async () => {
-        const startTime = Date.now();
-        let collectedResults = []; // 2초간의 결과 수집 배열
+        if (
+          webcamRef.current &&
+          webcamRef.current.video &&
+          webcamRef.current.video.readyState === 4
+        ) {
+          const video = webcamRef.current.video;
+          const predictions = await net.estimateHands(video);
 
-        const intervalId = setInterval(async () => {
-          if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-            const video = webcamRef.current.video;
-            const predictions = await net.estimateHands(video); // 손 관절 예측
-            if (predictions.length > 0) {
-              drawHands(predictions); // 손 관절 시각화
-              const result = await sendToMLServer(predictions[0].landmarks);
-              collectedResults.push(result);
-            }
+          if (predictions.length > 0) {
+            drawHands(predictions);
+
+            // 손 관절 좌표를 콘솔에 찍어줌
+            console.log("손 관절 데이터:", predictions[0].landmarks);
+            
+            // 서버로 손 관절 좌표 전송
+            await sendToMLServer(predictions[0].landmarks);
+          } else {
+            console.log("손 관절을 감지하지 못했습니다.");
           }
-
-          // 5초 후 평균 계산
-          if (Date.now() - startTime >= 5000) {
-            clearInterval(intervalId);
-            const avgResult = collectedResults.reduce((a, b) => a + b, 0) / collectedResults.length;
-
-            if (avgResult > 0) {
-              setPopupMessage("훌륭합니다. 다음 수어로 넘어갑시다."); // 정답일 경우 팝업 메시지
-              setMlResult(true);
-            } else {
-              setPopupMessage("오답입니다.");
-              setMlResult(false);
-            }
-            setShowPopup(true); // 팝업창 표시
-          }
-        }, 1000); // 매 1000ms마다 프레임 추적
+        } else {
+          console.log("웹캠이 준비되지 않았습니다.");
+        }
+        requestAnimationFrame(detect); // 실시간으로 프레임마다 호출
       };
 
       detect();
@@ -79,17 +72,20 @@ function ConsonantDetail() {
     }
   }, []);
 
-  // 캔버스에 손 관절 시각화 함수
+  // 손 관절 시각화 함수
   const drawHands = (predictions) => {
     const ctx = canvasRef.current.getContext("2d");
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
-
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
 
     predictions.forEach((prediction) => {
-      prediction.landmarks.forEach((landmark) => {
-        const { x, y } = landmark;
+      prediction.landmarks.forEach((landmark, i) => {
+        const [x, y] = landmark;
+
+        // 좌표를 콘솔에 찍어줌
+        console.log(`관절 ${i}: x=${x}, y=${y}`);
+
         ctx.beginPath();
         ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
         ctx.fillStyle = "red";
@@ -98,7 +94,7 @@ function ConsonantDetail() {
     });
   };
 
-  // ML 서버로 데이터 전송 함수
+  // ML 서버로 손 관절 좌표를 보내는 함수
   const sendToMLServer = async (landmarks) => {
     try {
       const response = await fetch("http://localhost:5000/finger_learn", {
@@ -106,17 +102,17 @@ function ConsonantDetail() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 전송
+        body: JSON.stringify({ id: index, landmarks }),
       });
       const data = await response.json();
-      return data.result; // 결과 반환 (0 또는 1)
+      setPopupMessage(data.result > 0 ? "정답입니다!" : "오답입니다!");
+      setShowPopup(true);
     } catch (error) {
       console.error("ML 서버와의 통신 오류가 발생했습니다.", error);
-      return 0; // 오류 시 0 반환 (오답 처리)
     }
   };
 
-  // 화면 렌더링 시 자음 정보 및 Handpose 모델 로드
+  // 초기 데이터 로드 및 Handpose 모델 초기화
   useEffect(() => {
     loadConsonantDetail();
     initializeHandpose();
@@ -124,13 +120,6 @@ function ConsonantDetail() {
 
   const handleGoBack = () => {
     navigate("/consonants");
-  };
-
-  const handleClosePopup = () => {
-    setShowPopup(false); // 팝업창 닫기
-    if (mlResult) {
-      navigate("/consonants"); // 정답일 경우 Consonant.js로 돌아가기
-    }
   };
 
   return (
@@ -141,56 +130,40 @@ function ConsonantDetail() {
 
       <div className="detail-content">
         {consonant ? (
-          <>
-            <div className="image-container">
-              <p className="consonant-character">{consonant.content}</p>
-              <img
-                src={`/images/Consonant${index}.gif`}
-                alt={`Consonant ${index} Large`}
-                className="large-image"
-                onError={(e) => {
-                  e.target.src = "/images/default.gif";
-                }}
-              />
-              <img
-                src={`/images/consonant${index}.png`}
-                alt={`Consonant ${index} Small`}
-                className="small-image"
-                onError={(e) => {
-                  e.target.src = "/images/default.png";
-                }}
-              />
-            </div>
-          </>
+          <div className="image-container">
+            <p className="consonant-character">{consonant.content}</p>
+            <img
+              src={`/images/Consonant${index}.gif`}
+              alt={`Consonant ${index}`}
+              className="large-image"
+              onError={(e) => {
+                e.target.src = "/images/default.gif";
+              }}
+            />
+            <img
+              src={`/images/consonant${index}.png`}
+              alt={`Consonant ${index}`}
+              className="small-image"
+              onError={(e) => {
+                e.target.src = "/images/default.png";
+              }}
+            />
+          </div>
         ) : (
           <p>자음 정보를 불러올 수 없습니다.</p>
         )}
       </div>
 
       <div className="cam-placeholder">
-        <Webcam
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          className="video-feed"
-          mirrored={false}
-        />
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: "100%",
-            height: "100%",
-          }}
-        />
+        <Webcam ref={webcamRef} screenshotFormat="image/jpeg" className="video-feed" />
+        <canvas ref={canvasRef} className="canvas" />
       </div>
 
       {showPopup && (
         <div className="popup">
           <div className="popup-content">
             <p>{popupMessage}</p>
-            <button onClick={handleClosePopup}>닫기</button>
+            <button onClick={() => setShowPopup(false)}>닫기</button>
           </div>
         </div>
       )}

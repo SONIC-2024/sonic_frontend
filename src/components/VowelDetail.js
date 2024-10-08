@@ -1,24 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Webcam from 'react-webcam';
-import Container from '../styles/Container';
-import { fetchWordInfo } from '../api';
-import './VowelDetail.css';
-import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델
-import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
-import '@tensorflow/tfjs-backend-webgl'; // WebGL 백엔드 추가
-import '@tensorflow/tfjs-backend-wasm'; // WASM 백엔드 추가
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Webcam from "react-webcam";
+import Container from "../styles/Container";
+import { fetchWordInfo } from "../api";
+import * as handpose from "@tensorflow-models/handpose";
+import * as tf from "@tensorflow/tfjs";
+import "./VowelDetail.css";
 
 function VowelDetail() {
   const { index } = useParams();
   const navigate = useNavigate();
   const webcamRef = useRef(null);
-  const canvasRef = useRef(null);  // 캔버스 레퍼런스 추가
+  const canvasRef = useRef(null);
   const [vowel, setVowel] = useState(null);
-  const [mlResult, setMlResult] = useState(null);
-  const [popupMessage, setPopupMessage] = useState('');
+  const [popupMessage, setPopupMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
 
-  // 모음 정보를 불러오는 함수
   const loadVowelDetail = useCallback(async () => {
     try {
       const response = await fetchWordInfo(index);
@@ -26,94 +23,94 @@ function VowelDetail() {
         setVowel(response.data);
       }
     } catch (error) {
-      console.error('모음 정보를 불러오는 중 오류가 발생했습니다.');
+      console.error("모음 정보를 불러오는 중 오류가 발생했습니다.");
     }
   }, [index]);
 
-  // Handpose 모델 초기화 함수
   const initializeHandpose = useCallback(async () => {
     try {
-      await tf.setBackend('webgl'); // 또는 'wasm'을 사용할 수 있습니다.
-      await tf.ready(); // 백엔드 준비 완료
-      console.log('TensorFlow.js 백엔드 로드 완료:', tf.getBackend());
-
-      const net = await handpose.load(); // handpose 모델 로드
-      console.log('Handpose model loaded.');
+      await tf.setBackend("webgl");
+      await tf.ready();
+      const net = await handpose.load();
+      console.log("Handpose 모델 로드 완료");
 
       const detect = async () => {
-        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+        if (
+          webcamRef.current &&
+          webcamRef.current.video &&
+          webcamRef.current.video.readyState === 4
+        ) {
           const video = webcamRef.current.video;
-          const predictions = await net.estimateHands(video); // 손 관절 예측
+          const predictions = await net.estimateHands(video);
+
           if (predictions.length > 0) {
-            console.log('손 관절 데이터: ', predictions); // 콘솔 로그로 손 관절 데이터 확인
-            drawHands(predictions); // 손 관절 시각화
-            sendToMLServer(predictions[0].landmarks); // 손 관절 데이터를 연속적으로 전송
+            drawHands(predictions);
+
+            // 손 관절 좌표를 콘솔에 찍어줌
+            console.log("손 관절 데이터:", predictions[0].landmarks);
+
+            // 서버로 손 관절 좌표 전송
+            await sendToMLServer(predictions[0].landmarks);
+          } else {
+            console.log("손 관절을 감지하지 못했습니다.");
           }
+        } else {
+          console.log("웹캠이 준비되지 않았습니다.");
         }
-        requestAnimationFrame(detect); // 매 프레임마다 호출
+        requestAnimationFrame(detect);
       };
 
       detect();
     } catch (error) {
-      console.error('Handpose 모델 초기화 중 오류 발생:', error);
+      console.error("Handpose 모델 초기화 중 오류 발생:", error);
     }
   }, []);
 
-  // 캔버스에 손 관절 시각화 함수
   const drawHands = (predictions) => {
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
-
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
 
     predictions.forEach((prediction) => {
-      const landmarks = prediction.landmarks;
+      prediction.landmarks.forEach((landmark, i) => {
+        const [x, y] = landmark;
 
-      // 손 관절 좌표를 웹캠 해상도에 맞게 변환
-      for (let i = 0; i < landmarks.length; i++) {
-        const x = landmarks[i][0] * videoWidth; // 비율에 맞게 x 좌표 변환
-        const y = landmarks[i][1] * videoHeight; // 비율에 맞게 y 좌표 변환
+        // 좌표를 콘솔에 찍어줌
+        console.log(`관절 ${i}: x=${x}, y=${y}`);
+
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
         ctx.fill();
-      }
+      });
     });
   };
 
-  // ML 서버로 데이터 전송 함수
   const sendToMLServer = async (landmarks) => {
     try {
-      console.log('서버로 전송할 손 관절 데이터: ', landmarks); // 전송할 데이터 확인
-      await fetch('http://localhost:5000/finger_learn', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5000/finger_learn", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id: index, landmarks }), // 손 관절 데이터를 연속적으로 전송
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setMlResult(data.result === 1 ? '정답입니다!' : '오답입니다!');
-          setPopupMessage(data.result === 1 ? '정답입니다!' : '오답입니다!');
-          setTimeout(() => {
-            setPopupMessage(''); // 3초 후 팝업 메시지 사라짐
-          }, 3000);
-        });
+        body: JSON.stringify({ id: index, landmarks }),
+      });
+      const data = await response.json();
+      setPopupMessage(data.result > 0 ? "정답입니다!" : "오답입니다!");
+      setShowPopup(true);
     } catch (error) {
-      console.error('ML 서버와의 통신 오류가 발생했습니다.', error);
+      console.error("ML 서버와의 통신 오류가 발생했습니다.", error);
     }
   };
 
-  // 화면 렌더링 시 모음 정보 및 Handpose 모델 로드
   useEffect(() => {
     loadVowelDetail();
     initializeHandpose();
   }, [loadVowelDetail, initializeHandpose]);
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate("/vowels");
   };
 
   return (
@@ -124,48 +121,41 @@ function VowelDetail() {
 
       <div className="detail-content">
         {vowel ? (
-          <>
-            <div className="image-container">
-              <p className="vowel-character">{vowel.content}</p>
-              <img
-                src={`/images/Vowel${index}.gif`}
-                alt={`Vowel ${index} Large`}
-                className="large-image"
-              />
-              <img
-                src={`/images/vowel${index}.png`}
-                alt={`Vowel ${index} Small`}
-                className="small-image"
-              />
-            </div>
-          </>
+          <div className="image-container">
+            <p className="vowel-character">{vowel.content}</p>
+            <img
+              src={`/images/Vowel${index}.gif`}
+              alt={`Vowel ${index}`}
+              className="large-image"
+              onError={(e) => {
+                e.target.src = "/images/default.gif";
+              }}
+            />
+            <img
+              src={`/images/vowel${index}.png`}
+              alt={`Vowel ${index}`}
+              className="small-image"
+              onError={(e) => {
+                e.target.src = "/images/default.png";
+              }}
+            />
+          </div>
         ) : (
           <p>모음 정보를 불러올 수 없습니다.</p>
         )}
       </div>
 
       <div className="cam-placeholder">
-        <Webcam
-          ref={webcamRef}
-          screenshotFormat="image/jpeg"
-          className="video-feed"
-          mirrored={false}
-        />
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '100%',
-            height: '100%',
-          }}
-        />
+        <Webcam ref={webcamRef} screenshotFormat="image/jpeg" className="video-feed" />
+        <canvas ref={canvasRef} className="canvas" />
       </div>
 
-      {popupMessage && (
-        <div className="popup-message">
-          <p>{popupMessage}</p>
+      {showPopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <p>{popupMessage}</p>
+            <button onClick={() => setShowPopup(false)}>닫기</button>
+          </div>
         </div>
       )}
     </Container>

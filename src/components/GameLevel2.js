@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Modal from 'react-modal';
 import Container from '../styles/Container';
-import { fetchLevel2Quiz, handleQuizAnswer, toggleFavorite } from '../api';
+import { fetchLevel2Quiz, toggleFavorite } from '../api';
+import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델 추가
+import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
 import './GameLevel2.css';
+import Webcam from 'react-webcam'; // Webcam 컴포넌트 추가
+import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
 
-// PopupModal 컴포넌트 추가
+// 팝업 모달 컴포넌트
 function PopupModal({ message, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,96 +29,129 @@ function PopupModal({ message, onClose }) {
 }
 
 function GameLevel2() {
-  const [currentImagePng, setCurrentImagePng] = useState(''); // PNG 이미지 URL
-  const [currentImageGif, setCurrentImageGif] = useState(''); // GIF 이미지 URL
-  const [correctAnswer, setCorrectAnswer] = useState(''); // 정답
-  const [quizId, setQuizId] = useState(null); // 퀴즈 ID
-  const [options, setOptions] = useState([]); // 보기
-  const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
-  const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
   const [score, setScore] = useState(0); // 점수
   const [questionCount, setQuestionCount] = useState(0); // 문제 개수
-  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
-  const [popupMessage, setPopupMessage] = useState(''); // 팝업 메시지
-  const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부
+  const [options, setOptions] = useState([]); // 보기
+  const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
+  const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
+
   const navigate = useNavigate();
+  const webcamRef = useRef(null);
+  const canvasRef = useRef(null); // 캔버스 추가
 
-  useEffect(() => {
-    const randomQuizId = Math.floor(Math.random() * 41) + 100; // 100에서 140 사이의 랜덤 ID 생성
-    setQuizId(randomQuizId); // 랜덤하게 생성된 quizId 설정
-    generateQuestion(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
-  }, []);
+  // Mediapipe Handpose 모델 초기화 함수
+  const initializeHandpose = useCallback(async () => {
+    try {
+      await tf.setBackend('webgl');
+      await tf.ready();
+      const net = await handpose.load();
 
-  // 정답 이미지 파일 로드 로직 업데이트 (자음/모음 배우기 방식)
-  const loadImages = (quizId) => {
-    const gifUrl = `/images/Quiz_id100.gif`; // GIF 이미지 경로 (자음 GIF)
+      const detect = async () => {
+        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+          const video = webcamRef.current.video;
+          const predictions = await net.estimateHands(video);
+          if (predictions.length > 0) {
+            drawHands(predictions); // 손 관절 시각화
+            const result = await sendToMLServer(predictions[0].landmarks);
+            if (result > 0) {
+              setPopupMessage('정답입니다!');
+              setScore(score + 1); // 정답 시 점수 증가
+            } else {
+              setPopupMessage('오답입니다!');
+            }
+            setShowPopup(true); // 팝업 표시
+          }
+        }
+      };
+      detect();
+    } catch (error) {
+      console.error('Handpose 모델 초기화 중 오류 발생:', error);
+    }
+  }, [score]);
 
-    // GIF 로드
-    const gifImage = new Image();
-    gifImage.src = gifUrl;
-    gifImage.onload = () => setCurrentImageGif(gifUrl);  // GIF가 로드되면 상태 설정
-    gifImage.onerror = () => setCurrentImageGif('');  // GIF가 없을 경우 빈 문자열 설정
+  const drawHands = (predictions) => {
+    const ctx = canvasRef.current.getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
+    predictions.forEach((prediction) => {
+      prediction.landmarks.forEach((landmark) => {
+        const { x, y } = landmark;
+        ctx.beginPath();
+        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      });
+    });
   };
 
-  // 문제 생성 함수
-  const generateQuestion = async (quizId) => {
+  const sendToMLServer = async (landmarks) => {
     try {
-      const response = await fetchLevel2Quiz(quizId); // 여기서 fetchLevel2Quiz만 호출하면 됩니다.
-      console.log('fetchLevel2Quiz 응답:', response); // 응답 데이터 확인
-
-      if (response) {
-        setCorrectAnswer(response.correctAnswer); // 정답 설정
-        setQuizId(response.quiz_id || quizId); // quiz_id가 있으면 설정, 없으면 기존 quizId 유지
-        setIsFavorite(response.isStarred); // 즐겨찾기 상태 설정
-        setOptions([...response.options]); // 보기 설정
-
-        // 이미지 로드 함수 호출
-        loadImages(quizId);
-      } else {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다.');
-      }
+      const response = await fetch('http://localhost:5000/finger_learn', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: currentQuestion?.quiz_id, landmarks }),
+      });
+      const data = await response.json();
+      return data.result;
     } catch (error) {
-      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
+      console.error('ML 서버와의 통신 오류가 발생했습니다.', error);
+      return 0;
     }
   };
 
-  // 4지선다 문제를 렌더링하는 부분
-  const handleOptionClick = async (option) => {
-    if (option === correctAnswer) {
+  useEffect(() => {
+    const loadQuizData = async () => {
+      try {
+        const randomQuizId = Math.floor(Math.random() * 41) + 100;
+        const response = await fetchLevel2Quiz(randomQuizId);
+        if (response) {
+          setCurrentQuestion(response);
+          setIsFavorite(response.isStarred);
+          setOptions(response.options); // 보기 항목 설정
+        }
+      } catch (error) {
+        console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
+      }
+    };
+
+    loadQuizData(); // 컴포넌트가 마운트될 때 퀴즈 데이터 로드
+    initializeHandpose(); // Handpose 모델 초기화
+  }, [initializeHandpose]);
+
+  const handleOptionClick = (option) => {
+    if (option === currentQuestion.correctAnswer) {
       setIsCorrect(true);
       setScore(score + 1);
-      try {
-        await handleQuizAnswer(quizId, correctAnswer); // quizId와 정답을 함께 전달
-      } catch (error) {
-        console.error('퀴즈 정답 처리 중 오류 발생:', error);
-      }
     } else {
       setIsCorrect(false);
     }
     setQuestionCount(questionCount + 1);
-    setModalIsOpen(true);
+    setModalIsOpen(true); // 모달 열기
   };
 
   const handleFavoriteClick = async () => {
-    if (!quizId) {
-      console.error('퀴즈 ID가 설정되지 않았습니다.');
-      return; // quizId가 없는 경우 더 이상 처리하지 않음
-    }
-
     try {
-      const response = await toggleFavorite(quizId); 
+      const response = await toggleFavorite(currentQuestion?.quiz_id);
       if (response.success) {
-        setIsFavorite(!isFavorite); // 즐겨찾기 상태 반전
-
-        // 팝업 메시지 설정
-        const message = isFavorite ? '즐겨찾기에서 해제되었습니다.' : '즐겨찾기에 등록되었습니다.';
-        setPopupMessage(message);  // 팝업 메시지 업데이트
-        setShowPopup(true);  // 팝업 표시
-        setTimeout(() => setShowPopup(false), 2000);  // 2초 후 팝업 숨기기
+        const newFavoriteState = !isFavorite;
+        setIsFavorite(newFavoriteState);
+        setPopupMessage(newFavoriteState ? '즐겨찾기에 등록되었습니다.' : '즐겨찾기에서 해제되었습니다.');
+        setShowPopup(true);
       }
     } catch (error) {
-      console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
+      console.error('즐겨찾기 처리 중 오류 발생:', error);
     }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
   };
 
   const handleCloseModal = () => {
@@ -124,44 +160,48 @@ function GameLevel2() {
       navigate('/'); // 10문제를 완료한 경우 홈으로 이동
     } else {
       const randomQuizId = Math.floor(Math.random() * 41) + 100; // 다음 퀴즈도 랜덤하게 설정
-      setQuizId(randomQuizId);
-      generateQuestion(randomQuizId); // 다음 문제로 이동
+      setCurrentQuestion(null);
+      fetchLevel2Quiz(randomQuizId).then((response) => {
+        setCurrentQuestion(response);
+      });
     }
-  };
-
-  const handleGoBack = () => {
-    navigate(-1);
   };
 
   return (
     <Container className="game-level2-container">
       <div className="game-level2-left">
-        <button className="back-button" onClick={handleGoBack}>&larr;</button>
-        {currentImagePng && (
-          <img src={currentImagePng} alt="PNG Character" className="character-image" />
-        )}
-        {currentImageGif && (
-          <img src={currentImageGif} alt="GIF Character" className="character-image" />
+        {currentQuestion ? (
+          <>
+            <h2>{currentQuestion.content}</h2>
+            <img src={currentQuestion.objectUrl} alt="퀴즈 이미지" />
+          </>
+        ) : (
+          <p>Loading...</p>
         )}
       </div>
       <div className="game-level2-right">
-        <button 
-          className={`favorite-button ${isFavorite ? 'active' : ''}`} 
+        <button
+          className={`favorite-button ${isFavorite ? 'active' : ''}`}
           onClick={handleFavoriteClick}
         >
           ★
         </button>
-        {options.length > 0 ? (
-          options.map((option, index) => (
+        <div className="options">
+          {options.map((option, index) => (
             <button key={index} className="option-button" onClick={() => handleOptionClick(option)}>
               {option}
             </button>
-          ))
-        ) : (
-          <p>Loading options...</p>
-        )}
-        <p className="progress-indicator">{score}/10</p>
+          ))}
+        </div>
+        <div className="cam-placeholder">
+          <h2 className="video-title">Live Video Feed</h2>
+          <Webcam ref={webcamRef} className="video-feed" screenshotFormat="image/jpeg" />
+          <canvas ref={canvasRef} className="canvas" />
+        </div>
       </div>
+
+      {showPopup && <PopupModal message={popupMessage} onClose={handleClosePopup} />}
+
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleCloseModal}
@@ -177,11 +217,6 @@ function GameLevel2() {
           <button onClick={handleCloseModal} className="next-button">다음</button>
         </div>
       </Modal>
-
-      {/* 팝업 모달 표시 */}
-      {showPopup && (
-        <PopupModal message={popupMessage} onClose={() => setShowPopup(false)} />
-      )}
     </Container>
   );
 }

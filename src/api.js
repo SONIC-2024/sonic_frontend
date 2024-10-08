@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL 설정
-const API_BASE_URL = 'http://43.201.210.243:8080';
+const API_BASE_URL = 'http://localhost:8080'; // localhost:8080으로 수정
 
 // Axios 인스턴스 생성
 const apiClient = axios.create({
