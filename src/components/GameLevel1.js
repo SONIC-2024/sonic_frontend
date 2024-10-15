@@ -2,23 +2,35 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
 import Container from '../styles/Container';
-import { fetchLevel1Quiz } from '../api'; // DB에서 퀴즈 데이터를 가져오는 API 호출
-import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델
-import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
+import { fetchLevel1Quiz } from '../api';
+import * as handpose from '@tensorflow-models/handpose';
+import * as tf from '@tensorflow/tfjs';
 import './GameLevel1.css';
 
-// 팝업 모달 컴포넌트
 function PopupModal({ message, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      onClose(); // 일정 시간 후 자동으로 모달 닫기
-    }, 2000); // 2초 후 자동으로 닫힘
-    return () => clearTimeout(timer); // 컴포넌트가 언마운트되면 타이머 클리어
+      onClose(); // 2초 후 팝업을 자동으로 닫음
+    }, 2000); // 2초 지속
+    return () => clearTimeout(timer); // 타이머 클리어
   }, [onClose]);
 
   return (
-    <div className="popup-modal">
-      <div className="modal-content">
+    <div className="popup-modal" style={{
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: "rgba(0, 0, 0, 0.9)", // 검정색 배경
+      color: "white", // 흰색 텍스트
+      padding: "20px 30px",
+      borderRadius: "10px",
+      zIndex: 1000,
+      maxWidth: "300px",
+      textAlign: "center",
+      fontSize: "16px"
+    }}>
+      <div className="popup-content">
         <span>{message}</span>
       </div>
     </div>
@@ -26,15 +38,14 @@ function PopupModal({ message, onClose }) {
 }
 
 function GameLevel1() {
-  const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 저장
+  const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
   const webcamRef = useRef(null);
-  const canvasRef = useRef(null); // 캔버스 추가
+  const canvasRef = useRef(null);
 
-  // Mediapipe Handpose 모델 초기화 함수
   const initializeHandpose = useCallback(async () => {
     try {
       await tf.setBackend('webgl');
@@ -48,7 +59,7 @@ function GameLevel1() {
             const video = webcamRef.current.video;
             const predictions = await net.estimateHands(video);
             if (predictions.length > 0) {
-              drawHands(predictions); // 손 관절 시각화
+              drawHands(predictions);
               const result = await sendToMLServer(predictions[0].landmarks);
               collectedResults.push(result);
             }
@@ -105,10 +116,10 @@ function GameLevel1() {
   useEffect(() => {
     const loadQuizData = async () => {
       try {
-        const randomQuizId = Math.floor(Math.random() * 30) + 1; // 1~30 사이의 퀴즈 ID 랜덤 생성
+        const randomQuizId = Math.floor(Math.random() * 30) + 1;
         const response = await fetchLevel1Quiz(randomQuizId);
         if (response.success) {
-          setCurrentQuestion(response.data); // 퀴즈 데이터 설정
+          setCurrentQuestion(response.data);
         } else {
           console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
         }
@@ -117,19 +128,17 @@ function GameLevel1() {
       }
     };
 
-    loadQuizData(); // 컴포넌트가 마운트될 때 퀴즈 데이터 로드
-    initializeHandpose(); // Handpose 모델 초기화
+    loadQuizData();
+    initializeHandpose();
   }, [initializeHandpose]);
 
-  // 즐겨찾기 처리 함수
   const handleFavoriteClick = () => {
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
     setPopupMessage(newFavoriteState ? '즐겨찾기에 등록되었습니다.' : '즐겨찾기에서 해제되었습니다.');
-    setShowPopup(true); // 팝업 표시
+    setShowPopup(true);
   };
 
-  // 팝업 닫기 함수
   const handleClosePopup = () => {
     setShowPopup(false);
   };
@@ -141,15 +150,10 @@ function GameLevel1() {
         <div className="word-display">
           {currentQuestion ? (
             <div className="word-content">
-              <span className="word-item">{currentQuestion.content}</span> {/* DB에서 불러온 단어 */}
-              <div className="character-display">
-                <span className="current-character">
-                  현재 맞춰야 하는 지문자: {currentQuestion.detailed_content[0]} {/* 첫 번째 지문자 표시 */}
-                </span>
-              </div>
+              <span className="word-item">{currentQuestion.content}</span>
             </div>
           ) : (
-            <span>Loading...</span> // 로딩 상태
+            <span>Loading...</span>
           )}
         </div>
       </div>

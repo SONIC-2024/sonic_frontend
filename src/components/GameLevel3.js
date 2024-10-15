@@ -1,164 +1,166 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Webcam from 'react-webcam';
 import Container from '../styles/Container';
-import { fetchLevel3Quiz, toggleFavorite } from '../api';
+import { fetchLevel3Quiz } from '../api';
+import * as handpose from '@tensorflow-models/handpose';
+import * as tf from '@tensorflow/tfjs';
 import './GameLevel3.css';
-import * as poseDetection from '@tensorflow-models/pose-detection'; // 포즈 모델 추가
-import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
-import '@tensorflow/tfjs-backend-webgl'; // WebGL 백엔드 추가
-import Webcam from 'react-webcam'; // Webcam 컴포넌트 추가
+
+function PopupModal({ message, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose(); // 2초 후 팝업을 자동으로 닫음
+    }, 2000); // 2초 지속
+    return () => clearTimeout(timer); // 타이머 클리어
+  }, [onClose]);
+
+  return (
+    <div className="popup-modal" style={{
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: "rgba(0, 0, 0, 0.9)", // 검정색 배경
+      color: "white", // 흰색 텍스트
+      padding: "20px 30px",
+      borderRadius: "10px",
+      zIndex: 1000,
+      maxWidth: "300px",
+      textAlign: "center",
+      fontSize: "16px"
+    }}>
+      <div className="popup-content">
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+}
 
 function GameLevel3() {
-  const [currentQuestion, setCurrentQuestion] = useState(null); // 퀴즈 데이터 상태
-  const [isFavorite, setIsFavorite] = useState(false); // 즐겨찾기 상태
-  const [isLoading, setIsLoading] = useState(true);
-  const [favoriteMessage, setFavoriteMessage] = useState(''); // 즐겨찾기 팝업 메시지
-  const [showFavoritePopup, setShowFavoritePopup] = useState(false); // 즐겨찾기 팝업 상태
-  const [mlResult, setMlResult] = useState(null); // ML 서버 결과 상태
-  const [isChecking, setIsChecking] = useState(false); // ML 서버 검사 중 여부
-
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
   const webcamRef = useRef(null);
-  const canvasRef = useRef(null); // 캔버스 참조 추가
+  const canvasRef = useRef(null);
 
-  useEffect(() => {
-    const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
-    loadQuizData(randomQuizId); // 랜덤하게 생성된 quizId로 데이터 로드
-  }, []); // 빈 배열을 전달하여 한 번만 실행
-
-  const loadQuizData = async (quizId) => {
+  const initializeHandpose = useCallback(async () => {
     try {
-      const response = await fetchLevel3Quiz(quizId); // API 호출하여 데이터 가져오기
-      if (response.success) {
-        setCurrentQuestion(response.data); // 퀴즈 데이터 설정
-        setIsFavorite(response.data.starred || false); // 즐겨찾기 상태 설정
-        setIsLoading(false); // 로딩 상태 해제
-      } else {
-        console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
-      }
-    } catch (error) {
-      console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
-    }
-  };
-
-  // Pose 모델 초기화 함수
-  const initializePoseModel = useCallback(async () => {
-    try {
-      await tf.setBackend('webgl'); // WebGL 백엔드 사용
+      await tf.setBackend('webgl');
       await tf.ready();
-
-      const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet, {
-          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-        });
-      console.log('Pose 모델 로드 완료');
-
-      const detectPose = async () => {
-        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-          const video = webcamRef.current.video;
-          const poses = await detector.estimatePoses(video); // 포즈 예측
-
-          if (poses.length > 0) {
-            console.log('포즈 데이터:', poses);
-            drawPoses(poses); // 포즈 시각화
-            sendToMLServer(currentQuestion.quiz_id, poses[0].keypoints); // 포즈 데이터 ML 서버로 전송
+      const net = await handpose.load();
+      const detect = async () => {
+        const startTime = Date.now();
+        let collectedResults = [];
+        const intervalId = setInterval(async () => {
+          if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+            const video = webcamRef.current.video;
+            const predictions = await net.estimateHands(video);
+            if (predictions.length > 0) {
+              drawHands(predictions);
+              const result = await sendToMLServer(predictions[0].landmarks);
+              collectedResults.push(result);
+            }
           }
-        }
-        requestAnimationFrame(detectPose); // 매 프레임마다 호출
+          if (Date.now() - startTime >= 5000) {
+            clearInterval(intervalId);
+            const avgResult =
+              collectedResults.reduce((a, b) => a + b, 0) /
+              collectedResults.length;
+            setPopupMessage(avgResult > 0 ? '정답입니다!' : '오답입니다!');
+            setShowPopup(true);
+          }
+        }, 1000);
       };
-
-      detectPose();
+      detect();
     } catch (error) {
-      console.error('Pose 모델 초기화 중 오류 발생:', error);
+      console.error('Handpose 모델 초기화 중 오류 발생:', error);
     }
-  }, [currentQuestion?.quiz_id]); // currentQuestion.quiz_id에 의존
+  }, []);
 
-  useEffect(() => {
-    if (currentQuestion) {
-      initializePoseModel(); // 퀴즈 데이터 로드 완료 후 포즈 모델 초기화
-    }
-  }, [currentQuestion, initializePoseModel]); // currentQuestion 변경 시마다 호출
-
-  // 캔버스에 포즈 시각화 함수
-  const drawPoses = (poses) => {
+  const drawHands = (predictions) => {
     const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // 캔버스 초기화
-
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const videoWidth = webcamRef.current.video.videoWidth;
     const videoHeight = webcamRef.current.video.videoHeight;
-
-    poses.forEach((pose) => {
-      pose.keypoints.forEach((keypoint) => {
-        const { x, y } = keypoint;
+    predictions.forEach((prediction) => {
+      prediction.landmarks.forEach((landmark) => {
+        const { x, y } = landmark;
         ctx.beginPath();
         ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'red';
         ctx.fill();
       });
     });
   };
 
-  // ML 서버로 포즈 데이터 전송 함수
-  const sendToMLServer = async (quizId, keypoints) => {
+  const sendToMLServer = async (landmarks) => {
     try {
-      const response = await fetch('http://localhost:5000/body_quiz', {
+      const response = await fetch('http://localhost:5000/finger_learn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: quizId, keypoints }), // 포즈 데이터를 ML 서버로 전송
+        body: JSON.stringify({ id: currentQuestion?.id, landmarks }),
       });
-      const result = await response.json();
-      console.log('ML 서버 응답:', result); // ML 서버로부터 받은 응답 로그
-      setMlResult(result.result);
-      return result.result;
+      const data = await response.json();
+      return data.result;
     } catch (error) {
-      console.error('ML 서버와의 통신 중 오류:', error);
-      return null;
+      console.error('ML 서버와의 통신 오류가 발생했습니다.', error);
+      return 0;
     }
   };
 
-  // 즐겨찾기 처리 함수
-  const handleFavoriteClick = async () => {
-    const favoriteQuizId = currentQuestion?.quiz_id || 200; // 현재 퀴즈의 ID 사용
-
-    try {
-      const response = await toggleFavorite(favoriteQuizId); // 즐겨찾기 요청
-      if (response.success) {
-        const newFavoriteState = !isFavorite;
-        setIsFavorite(newFavoriteState); // 즐겨찾기 상태 반전
-
-        setFavoriteMessage(newFavoriteState ? '즐겨찾기에 등록되었습니다.' : '즐겨찾기에서 해제되었습니다.');
-        setShowFavoritePopup(true); // 팝업 표시
-        setTimeout(() => setShowFavoritePopup(false), 2000); // 2초 후 팝업 숨김
+  useEffect(() => {
+    const loadQuizData = async () => {
+      try {
+        const randomQuizId = Math.floor(Math.random() * 10) + 200; // 200에서 209 사이의 랜덤 ID 생성
+        const response = await fetchLevel3Quiz(randomQuizId);
+        if (response.success) {
+          setCurrentQuestion(response.data);
+        } else {
+          console.error('퀴즈 데이터를 불러오는 데 실패했습니다:', response.message);
+        }
+      } catch (error) {
+        console.error('퀴즈 데이터를 불러오는 중 오류 발생:', error);
       }
-    } catch (error) {
-      console.error('즐겨찾기 상태 변경 중 오류 발생:', error);
-    }
+    };
+
+    loadQuizData();
+    initializeHandpose();
+  }, [initializeHandpose]);
+
+  const handleFavoriteClick = () => {
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+    setPopupMessage(newFavoriteState ? '즐겨찾기에 등록되었습니다.' : '즐겨찾기에서 해제되었습니다.');
+    setShowPopup(true);
   };
 
-  const handleGoBack = () => {
-    navigate(-1); // 이전 페이지로 이동
+  const handleClosePopup = () => {
+    setShowPopup(false);
   };
 
   return (
     <Container className="game-level3-container">
       <div className="game-level3-left">
-        <button className="back-button" onClick={handleGoBack}>
-          &larr;
-        </button>
+        <button className="back-button" onClick={() => navigate(-1)}>&larr;</button>
         <div className="word-display">
-          {isLoading ? (
-            <span>Loading...</span>
+          {currentQuestion ? (
+            <div className="word-content">
+              <span className="word-item">{currentQuestion.content}</span>
+            </div>
           ) : (
-            <span className="word-item">{currentQuestion?.content}</span> // 퀴즈 내용 표시
+            <span>Loading...</span>
           )}
         </div>
       </div>
 
       <div className="game-level3-right">
         <button
-          className={`favorite-button ${isFavorite ? 'active' : ''}`} // 상태에 따라 클래스 변경
+          className={`favorite-button ${isFavorite ? 'active' : ''}`}
           onClick={handleFavoriteClick}
         >
           ★
@@ -166,25 +168,11 @@ function GameLevel3() {
         <div className="cam-placeholder">
           <h2 className="video-title">Live Video Feed</h2>
           <Webcam ref={webcamRef} className="video-feed" screenshotFormat="image/jpeg" />
-          <canvas
-            ref={canvasRef}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '100%',
-              height: '100%',
-            }}
-          />
+          <canvas ref={canvasRef} className="canvas" />
         </div>
       </div>
 
-      {/* 즐겨찾기 팝업 */}
-      {showFavoritePopup && (
-        <div className="favorite-popup">
-          <p>{favoriteMessage}</p>
-        </div>
-      )}
+      {showPopup && <PopupModal message={popupMessage} onClose={handleClosePopup} />}
     </Container>
   );
 }

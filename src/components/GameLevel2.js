@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Container from '../styles/Container';
 import { fetchLevel2Quiz, toggleFavorite } from '../api';
-import * as handpose from '@tensorflow-models/handpose'; // 손 관절 모델 추가
-import * as tf from '@tensorflow/tfjs'; // TensorFlow.js 객체 가져오기
 import './GameLevel2.css';
-import Webcam from 'react-webcam'; // Webcam 컴포넌트 추가
 import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
@@ -33,78 +30,17 @@ function GameLevel2() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false);
-  const [score, setScore] = useState(0); // 점수
-  const [questionCount, setQuestionCount] = useState(0); // 문제 개수
   const [options, setOptions] = useState([]); // 보기
   const [modalIsOpen, setModalIsOpen] = useState(false); // 모달 상태
   const [isCorrect, setIsCorrect] = useState(false); // 정답 여부
 
   const navigate = useNavigate();
-  const webcamRef = useRef(null);
-  const canvasRef = useRef(null); // 캔버스 추가
-
-  // Mediapipe Handpose 모델 초기화 함수
-  const initializeHandpose = useCallback(async () => {
-    try {
-      await tf.setBackend('webgl');
-      await tf.ready();
-      const net = await handpose.load();
-
-      const detect = async () => {
-        if (webcamRef.current && webcamRef.current.video.readyState === 4) {
-          const video = webcamRef.current.video;
-          const predictions = await net.estimateHands(video);
-          if (predictions.length > 0) {
-            drawHands(predictions); // 손 관절 시각화
-            const result = await sendToMLServer(predictions[0].landmarks);
-            if (result > 0) {
-              setPopupMessage('정답입니다!');
-              setScore(score + 1); // 정답 시 점수 증가
-            } else {
-              setPopupMessage('오답입니다!');
-            }
-            setShowPopup(true); // 팝업 표시
-          }
-        }
-      };
-      detect();
-    } catch (error) {
-      console.error('Handpose 모델 초기화 중 오류 발생:', error);
-    }
-  }, [score]);
-
-  const drawHands = (predictions) => {
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const videoWidth = webcamRef.current.video.videoWidth;
-    const videoHeight = webcamRef.current.video.videoHeight;
-    predictions.forEach((prediction) => {
-      prediction.landmarks.forEach((landmark) => {
-        const { x, y } = landmark;
-        ctx.beginPath();
-        ctx.arc(x * videoWidth, y * videoHeight, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      });
-    });
-  };
-
-  const sendToMLServer = async (landmarks) => {
-    try {
-      const response = await fetch('http://localhost:5000/finger_learn', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: currentQuestion?.quiz_id, landmarks }),
-      });
-      const data = await response.json();
-      return data.result;
-    } catch (error) {
-      console.error('ML 서버와의 통신 오류가 발생했습니다.', error);
-      return 0;
-    }
-  };
+  
+  const gifImages = [
+    { id: 100, gif: '/images/Quiz_id100.gif', png: '/images/quiz_id100.png' },
+    { id: 101, gif: '/images/Quiz_id101.gif', png: '/images/quiz_id101.png' },
+    { id: 102, gif: '/images/Quiz_id102.gif', png: '/images/quiz_id102.png' }
+  ];
 
   useEffect(() => {
     const loadQuizData = async () => {
@@ -122,17 +58,14 @@ function GameLevel2() {
     };
 
     loadQuizData(); // 컴포넌트가 마운트될 때 퀴즈 데이터 로드
-    initializeHandpose(); // Handpose 모델 초기화
-  }, [initializeHandpose]);
+  }, []);
 
   const handleOptionClick = (option) => {
     if (option === currentQuestion.correctAnswer) {
       setIsCorrect(true);
-      setScore(score + 1);
     } else {
       setIsCorrect(false);
     }
-    setQuestionCount(questionCount + 1);
     setModalIsOpen(true); // 모달 열기
   };
 
@@ -156,16 +89,14 @@ function GameLevel2() {
 
   const handleCloseModal = () => {
     setModalIsOpen(false);
-    if (questionCount >= 10) {
-      navigate('/'); // 10문제를 완료한 경우 홈으로 이동
-    } else {
-      const randomQuizId = Math.floor(Math.random() * 41) + 100; // 다음 퀴즈도 랜덤하게 설정
-      setCurrentQuestion(null);
-      fetchLevel2Quiz(randomQuizId).then((response) => {
-        setCurrentQuestion(response);
-      });
-    }
+    const randomQuizId = Math.floor(Math.random() * 41) + 100; // 다음 퀴즈도 랜덤하게 설정
+    setCurrentQuestion(null);
+    fetchLevel2Quiz(randomQuizId).then((response) => {
+      setCurrentQuestion(response);
+    });
   };
+
+  const randomGif = gifImages[Math.floor(Math.random() * gifImages.length)];
 
   return (
     <Container className="game-level2-container">
@@ -173,12 +104,16 @@ function GameLevel2() {
         {currentQuestion ? (
           <>
             <h2>{currentQuestion.content}</h2>
-            <img src={currentQuestion.objectUrl} alt="퀴즈 이미지" />
+            <div className="image-container">
+              <img src={randomGif.gif} alt={`Quiz ${randomGif.id}`} className="large-image" />
+              <img src={randomGif.png} alt={`Quiz ${randomGif.id}`} className="small-image" />
+            </div>
           </>
         ) : (
           <p>Loading...</p>
         )}
       </div>
+
       <div className="game-level2-right">
         <button
           className={`favorite-button ${isFavorite ? 'active' : ''}`}
@@ -192,11 +127,6 @@ function GameLevel2() {
               {option}
             </button>
           ))}
-        </div>
-        <div className="cam-placeholder">
-          <h2 className="video-title">Live Video Feed</h2>
-          <Webcam ref={webcamRef} className="video-feed" screenshotFormat="image/jpeg" />
-          <canvas ref={canvasRef} className="canvas" />
         </div>
       </div>
 
